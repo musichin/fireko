@@ -4,37 +4,35 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 
 internal fun generateFunReceiverDocumentSnapshot(
-    target: TargetType,
-    targets: List<TargetType>
+    target: TargetClass,
+    targets: List<TargetClass>
 ) = generateFun(target, targets, FIREBASE_DOCUMENT_SNAPSHOT, ::generateLocalProperty)
 
 private fun generateLocalProperty(
-    target: TargetType,
-    property: ParameterSpec,
-    targets: List<TargetType>
+    param: TargetParameter,
+    targets: List<TargetClass>
 ): PropertySpec {
-    var initializer = generateInitializer(target, property, targets)
-    if (!property.type.isNullable) {
+    var initializer = generateInitializer(param, targets)
+    if (!param.type.isNullable) {
         initializer = CodeBlock.of("requireNotNull(%L)", initializer)
     }
 
     return PropertySpec
-        .builder(property.name, property.type)
+        .builder(param.name, param.type)
         .initializer(initializer)
         .build()
 }
 
 private fun generateInitializer(
-    target: TargetType,
-    property: ParameterSpec,
-    targets: List<TargetType>
+    param: TargetParameter,
+    targets: List<TargetClass>
 ): CodeBlock {
-    if (property.propertyAnnotations(target.typeSpec).any { it.typeName == FIREBASE_DOCUMENT_ID }) {
+    if (param.hasAnnotation(FIREBASE_DOCUMENT_ID)) {
         return CodeBlock.of("getId()")
     }
 
-    val name = propertyName(target, property)
-    val type = property.type
+    val name = param.propertyName
+    val type = param.type
 
     val base = getBaseInitializer(name, type)
     if (base != null) {
@@ -46,12 +44,12 @@ private fun generateInitializer(
         return CodeBlock.builder()
             .add(
                 "(get(%S) as %T?)?.to%L()",
-                property.name, MAP.parameterizedBy(ANY, ANY), type.simpleName
+                param.name, MAP.parameterizedBy(ANY, ANY), type.simpleName
             )
             .build()
     }
 
-    return when (property.type.copy(nullable = false)) {
+    return when (param.type.copy(nullable = false)) {
         BYTE -> CodeBlock.of("(%L)?.toByte()", getBaseInitializer(name, LONG))
         SHORT -> CodeBlock.of("(%L)?.toShort()", getBaseInitializer(name, LONG))
         INT -> CodeBlock.of("(%L)?.toInt()", getBaseInitializer(name, LONG))
@@ -59,11 +57,14 @@ private fun generateInitializer(
         TIME_INSTANT,
         BP_INSTANT -> CodeBlock.builder()
             .beginControlFlow("(%L)?.let", getBaseInitializer(name, FIREBASE_TIMESTAMP))
-            .add("%T.ofEpochSecond(it.seconds, it.nanoseconds.toLong())", type.copy(nullable = false))
+            .add(
+                "%T.ofEpochSecond(it.seconds, it.nanoseconds.toLong())",
+                type.copy(nullable = false)
+            )
             .endControlFlow()
             .build()
         BYTE_ARRAY -> CodeBlock.of("(%L)?.toBytes()", getBaseInitializer(name, FIREBASE_BLOB))
-        else -> CodeBlock.of("get(%S, %T::class.java)", property.name, property.type)
+        else -> CodeBlock.of("get(%S, %T::class.java)", param.name, param.type)
         // LIST
         // MAP
     }

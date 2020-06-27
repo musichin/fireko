@@ -27,4 +27,9 @@ data class ExamplePojo(
     val point: GeoPoint
 )
 
-data class B(val l: Long)
+data class B(val l: Long) {
+    fun te() {
+        val map = mutableMapOf<String, Any>()
+        val a: B by map
+    }
+}

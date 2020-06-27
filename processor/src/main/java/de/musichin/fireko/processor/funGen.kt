@@ -1,20 +1,22 @@
 package de.musichin.fireko.processor
 
-import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeName
 
 internal fun generateFun(
-    target: TargetType,
-    targets: List<TargetType>,
+    target: TargetClass,
+    targets: List<TargetClass>,
     receiver: TypeName,
-    propertyGen: (TargetType, ParameterSpec, List<TargetType>) -> PropertySpec
+    propertyGen: (TargetParameter, List<TargetClass>) -> PropertySpec
 ) = FunSpec
     .builder("to${target.simpleName.capitalize()}")
     .receiver(receiver)
     .returns(target.type)
     .apply {
-        val params = excludeParameters(target, target.constructor.parameters)
+        val params = target.includeParams
         params.forEach { parameter ->
-            addCode("%L", propertyGen(target, parameter, targets))
+            addCode("%L", propertyGen(parameter, targets))
         }
 
         val paramNames = params.map { it.name }.joinToString(", ") { "$it = $it" }
@@ -22,13 +24,3 @@ internal fun generateFun(
         addCode("return ${target.simpleName}($paramNames)")
     }
     .build()
-
-
-
-private fun excludeParameters(
-    targetType: TargetType,
-    parameters: List<ParameterSpec>
-): List<ParameterSpec> = parameters.filter { param ->
-    param.propertyAnnotations(targetType.typeSpec)
-        .none { annotation -> annotation.typeName == FIREBASE_EXCLUDE }
-}

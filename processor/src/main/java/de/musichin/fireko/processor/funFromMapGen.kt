@@ -4,8 +4,8 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 
 internal fun generateFunReceiverMap(
-    target: TargetType,
-    targets: List<TargetType>
+    target: TargetClass,
+    targets: List<TargetClass>
 ) = generateFun(
     target,
     targets,
@@ -14,28 +14,26 @@ internal fun generateFunReceiverMap(
 )
 
 private fun generateLocalProperty(
-    target: TargetType,
-    property: ParameterSpec,
-    targets: List<TargetType>
+    param: TargetParameter,
+    targets: List<TargetClass>
 ): PropertySpec {
-    var initializer = generateInitializer(target, property, targets)
-    if (!property.type.isNullable) {
+    var initializer = generateInitializer(param, targets)
+    if (!param.type.isNullable) {
         initializer = CodeBlock.builder().add("requireNotNull(%L)", initializer).build()
     }
 
     return PropertySpec
-        .builder(property.name, property.type)
+        .builder(param.name, param.type)
         .initializer(initializer)
         .build()
 }
 
 private fun generateInitializer(
-    target: TargetType,
-    property: ParameterSpec,
-    targets: List<TargetType>
+    param: TargetParameter,
+    targets: List<TargetClass>
 ): CodeBlock {
-    val name = propertyName(target, property)
-    val type = property.type
+    val name = param.propertyName
+    val type = param.type
 
     val base = getBaseInitializer(name, type)
     if (base != null) {
@@ -60,7 +58,10 @@ private fun generateInitializer(
         TIME_INSTANT,
         BP_INSTANT -> CodeBlock.builder()
             .beginControlFlow("(%L)?.let", getBaseInitializer(name, FIREBASE_TIMESTAMP))
-            .add("%T.ofEpochSecond(it.seconds, it.nanoseconds.toLong())", type.copy(nullable = false))
+            .add(
+                "%T.ofEpochSecond(it.seconds, it.nanoseconds.toLong())",
+                type.copy(nullable = false)
+            )
             .endControlFlow()
             .build()
         BYTE_ARRAY -> CodeBlock.of("(%L)?.toBytes()", getBaseInitializer(name, FIREBASE_BLOB))

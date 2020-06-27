@@ -48,7 +48,7 @@ class FirekoAnnotationProcessor : AbstractProcessor() {
         classInspector = ElementsClassInspector.create(env.elementUtils, env.typeUtils)
     }
 
-    private fun targetType(element: Element): TargetType? {
+    private fun targetType(element: Element): TargetClass? {
         val packageName = processingEnv.elementUtils.getPackageOf(element).toString()
         val name = element.simpleName.toString()
 
@@ -59,11 +59,11 @@ class FirekoAnnotationProcessor : AbstractProcessor() {
 
         println(typeSpec.initializerBlock.toString())
 
-        return TargetType(typeSpec, ClassName(packageName, name), constructor)
+        return TargetClass(typeSpec, ClassName(packageName, name), constructor)
     }
 
-    private fun process(targetType: TargetType, targets: List<TargetType>) {
-        val fileSpec = generateFile(targetType, targets)
+    private fun process(targetClass: TargetClass, targets: List<TargetClass>) {
+        val fileSpec = generateFile(targetClass, targets)
         writeToFile(fileSpec)
     }
 
