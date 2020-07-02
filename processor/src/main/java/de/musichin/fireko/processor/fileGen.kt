@@ -16,7 +16,7 @@ internal fun generateFile(target: TargetClass, targets: List<TargetClass>): File
         .builder(target.packageName, "${target.simpleName}${Fireko::class.java.simpleName}")
         .apply {
             imports.forEach {
-                addImport(it.packageName, listOf("to${it.simpleName.capitalize()}"))
+                addImport(it.packageName, listOf(toType(it)))
             }
         }
         .addFunction(generateFunReceiverDocumentSnapshot(target, targets))

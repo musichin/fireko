@@ -1,6 +1,6 @@
 package de.musichin.fireko.processor
 
-import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.*
 
 internal val FIREBASE_PROPERTY_NAME =
     ClassName("com.google.firebase.firestore", "PropertyName")
@@ -24,3 +24,15 @@ internal val TIME_INSTANT =
     ClassName("java.time", "Instant")
 internal val BP_INSTANT =
     ClassName("org.threeten.bp", "Instant")
+
+
+internal val FIREBASE_SUPPORTED_TYPES = listOf(
+    FIREBASE_DOCUMENT_REFERENCE,
+    FIREBASE_TIMESTAMP,
+    FIREBASE_GEO_POINT,
+    FIREBASE_BLOB,
+    BOOLEAN,
+    DOUBLE,
+    LONG,
+    STRING
+)

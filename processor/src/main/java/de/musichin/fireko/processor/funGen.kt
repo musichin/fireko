@@ -10,7 +10,7 @@ internal fun generateFun(
     receiver: TypeName,
     propertyGen: (TargetParameter, List<TargetClass>) -> PropertySpec
 ) = FunSpec
-    .builder("to${target.simpleName.capitalize()}")
+    .builder(toType(target.type))
     .receiver(receiver)
     .returns(target.type)
     .apply {

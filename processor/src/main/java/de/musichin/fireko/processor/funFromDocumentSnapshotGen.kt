@@ -11,63 +11,42 @@ internal fun generateFunReceiverDocumentSnapshot(
 private fun generateLocalProperty(
     param: TargetParameter,
     targets: List<TargetClass>
-): PropertySpec {
-    var initializer = generateInitializer(param, targets)
-    if (!param.type.isNullable) {
-        initializer = CodeBlock.of("requireNotNull(%L)", initializer)
-    }
-
-    return PropertySpec
-        .builder(param.name, param.type)
-        .initializer(initializer)
-        .build()
-}
+): PropertySpec = PropertySpec
+    .builder(param.name, param.type)
+    .initializer(generateInitializer(param, targets))
+    .build()
 
 private fun generateInitializer(
     param: TargetParameter,
-    targets: List<TargetClass>
+    targets: List<TargetClass> = emptyList()
 ): CodeBlock {
     if (param.hasAnnotation(FIREBASE_DOCUMENT_ID)) {
-        return CodeBlock.of("getId()")
+        return CodeBlock.of("getId()") + param.convert(STRING)
     }
 
     val name = param.propertyName
     val type = param.type
 
-    val base = getBaseInitializer(name, type)
-    if (base != null) {
-        return base
-    }
-
     if (type is ClassName && targets.map { it.type }.contains(type.copy(nullable = false))) {
         // FIXME unsafe
-        return CodeBlock.builder()
-            .add(
-                "(get(%S) as %T?)?.to%L()",
-                param.name, MAP.parameterizedBy(ANY, ANY), type.simpleName
-            )
-            .build()
+        return CodeBlock.of(
+            "(get(%S) as %T?)?.to%L()",
+            param.name, MAP.parameterizedBy(ANY, ANY), type.simpleName
+        )
     }
 
-    return when (param.type.copy(nullable = false)) {
-        BYTE -> CodeBlock.of("(%L)?.toByte()", getBaseInitializer(name, LONG))
-        SHORT -> CodeBlock.of("(%L)?.toShort()", getBaseInitializer(name, LONG))
-        INT -> CodeBlock.of("(%L)?.toInt()", getBaseInitializer(name, LONG))
-        FLOAT -> CodeBlock.of("(%L)?.toFloat()", getBaseInitializer(name, DOUBLE))
-        TIME_INSTANT,
-        BP_INSTANT -> CodeBlock.builder()
-            .beginControlFlow("(%L)?.let", getBaseInitializer(name, FIREBASE_TIMESTAMP))
-            .add(
-                "%T.ofEpochSecond(it.seconds, it.nanoseconds.toLong())",
-                type.copy(nullable = false)
-            )
-            .endControlFlow()
-            .build()
-        BYTE_ARRAY -> CodeBlock.of("(%L)?.toBytes()", getBaseInitializer(name, FIREBASE_BLOB))
-        else -> CodeBlock.of("get(%S, %T::class.java)", param.name, param.type)
-        // LIST
-        // MAP
+    val supportedSources = FIREBASE_SUPPORTED_TYPES intersect param.supportedSources
+    if (supportedSources.isNotEmpty()) {
+        val source = param.selectSource(supportedSources)
+        return initializerByType(source, param)
     }
+
+    return getBaseInitializer(name, type) + param.convert(type)
+}
+
+private fun initializerByType(type: TypeName, param: TargetParameter): CodeBlock {
+    val source = type.copy(nullable = param.type.isNullable)
+    return getBaseInitializer(param.propertyName, source) + param.convert(source)
 }
 
 private fun getBaseInitializer(name: String, type: TypeName) = when (type.copy(nullable = false)) {
@@ -80,5 +59,5 @@ private fun getBaseInitializer(name: String, type: TypeName) = when (type.copy(n
     FIREBASE_GEO_POINT,
     FIREBASE_DOCUMENT_REFERENCE,
     UTIL_DATE -> CodeBlock.of("get%L(%S)", (type as ClassName).simpleName, name)
-    else -> null
-}
+    else -> throw IllegalArgumentException("Type $type is unsupported.")
+}.wrapRequireNotNull(type.isNullable)
