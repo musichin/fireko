@@ -24,6 +24,7 @@ data class ExamplePojo(
     val float: Float,
     val date: Date,
     val instant: Instant,
+    val charSequence: CharSequence,
     @Exclude val ignore: String? = null,
     val simpleEnum: SimpleEnum,
     val complexEnum: ComplexEnum

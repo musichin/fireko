@@ -82,7 +82,7 @@ internal sealed class TargetParameter(
             }
 
             return when (parameter.type.copy(nullable = false)) {
-                STRING ->
+                STRING, CHAR_SEQUENCE ->
                     StringTargetParameter(typeSpec, parameter)
                 NUMBER, BYTE, SHORT, INT, LONG, FLOAT, DOUBLE, CHAR ->
                     NumberTargetParameter(typeSpec, parameter)
@@ -102,7 +102,7 @@ private class StringTargetParameter(
     targetTypeSpec: TypeSpec,
     parameterSpec: ParameterSpec
 ) : TargetParameter(targetTypeSpec, parameterSpec) {
-    override val supportedSources: List<TypeName> = listOf(STRING)
+    override val supportedSources: List<TypeName> = listOf(STRING, CHAR_SEQUENCE)
 
     override fun convert(source: TypeName): CodeBlock = when (source.copy(nullable = false)) {
         STRING -> CodeBlock.of("")
