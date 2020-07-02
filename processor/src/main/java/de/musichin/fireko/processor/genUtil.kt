@@ -4,10 +4,6 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.TypeName
 
-internal fun CodeBlock.wrapRequireNotNull(nullable: Boolean): CodeBlock =
-    if (nullable) this
-    else CodeBlock.of("requireNotNull(%L)", this)
-
 internal fun invokeToType(type: ClassName): CodeBlock =
     invokeToType(type.isNullable, type.simpleName)
 

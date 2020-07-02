@@ -6,9 +6,8 @@ import com.squareup.kotlinpoet.TypeName
 
 internal fun generateFun(
     target: TargetClass,
-    targets: List<TargetClass>,
     receiver: TypeName,
-    propertyGen: (TargetParameter, List<TargetClass>) -> PropertySpec
+    propertyGen: (TargetParameter) -> PropertySpec
 ) = FunSpec
     .builder(toType(target.type))
     .receiver(receiver)
@@ -16,7 +15,7 @@ internal fun generateFun(
     .apply {
         val params = target.includeParams
         params.forEach { parameter ->
-            addCode("%L", propertyGen(parameter, targets))
+            addCode("%L", propertyGen(parameter))
         }
 
         val paramNames = params.map { it.name }.joinToString(", ") { "$it = $it" }

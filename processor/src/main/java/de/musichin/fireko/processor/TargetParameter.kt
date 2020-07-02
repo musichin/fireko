@@ -1,6 +1,7 @@
 package de.musichin.fireko.processor
 
 import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 import com.squareup.kotlinpoet.metadata.specs.ClassInspector
 import com.squareup.kotlinpoet.metadata.specs.toTypeSpec
@@ -22,9 +23,9 @@ internal sealed class TargetParameter(
 
     val include = !exclude
 
-    val hasDefault: Boolean = parameterSpec.defaultValue != null
-
     val propertyName: String = annotations.propertyName() ?: name
+
+    val embedded: Boolean = hasAnnotation(EMBEDDED)
 
     fun hasAnnotation(typeName: TypeName): Boolean = annotation(typeName) != null
 
@@ -34,15 +35,12 @@ internal sealed class TargetParameter(
 
     abstract val supportedSources: List<TypeName>
 
-    fun isSourceSupported(source: TypeName): Boolean =
-        supportedSources.contains(source.copy(nullable = false))
-
     open fun selectSource(sources: Collection<TypeName>): TypeName {
         if (sources.contains(type.copy(nullable = false))) {
             return type.copy(nullable = false)
         }
 
-        return sources.first()
+        return supportedSources.find(sources::contains) ?: sources.first()
     }
 
     companion object {
@@ -251,9 +249,18 @@ internal class ClassTargetParameter(
     parameterSpec: ParameterSpec,
     typeSpec: TypeSpec?
 ) : TargetParameter(targetTypeSpec, parameterSpec) {
-    override val supportedSources: List<TypeName> = listOf(FIREBASE_DOCUMENT_SNAPSHOT, MAP)
+
+    override val supportedSources: List<TypeName> = listOf(
+        FIREBASE_DOCUMENT_SNAPSHOT,
+        MAP.parameterizedBy(STRING, ANY),
+        MAP.parameterizedBy(STRING, ANY.copy(nullable = false)),
+        MAP.parameterizedBy(ANY, ANY),
+        MAP.parameterizedBy(ANY, ANY.copy(nullable = true)),
+        MAP
+    )
 
     override fun convert(source: TypeName): CodeBlock {
+        println(annotations)
         return CodeBlock.Builder().add(invokeToType(type as ClassName)).build()
     }
 }

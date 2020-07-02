@@ -3,40 +3,25 @@ package de.musichin.fireko.processor
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 
-internal fun generateFunReceiverMap(
-    target: TargetClass,
-    targets: List<TargetClass>
-) = generateFun(
+internal fun generateFunReceiverMap(target: TargetClass) = generateFun(
     target,
-    targets,
-    MAP.parameterizedBy(ANY, ANY.copy(nullable = true)),
+    MAP.parameterizedBy(STRING, ANY.copy(nullable = true)),
     ::generateLocalProperty
 )
 
-private fun generateLocalProperty(
-    param: TargetParameter,
-    targets: List<TargetClass>
-): PropertySpec {
+private fun generateLocalProperty(param: TargetParameter): PropertySpec {
     return PropertySpec
         .builder(param.name, param.type)
-        .initializer(generateInitializer(param, targets))
+        .initializer(generateInitializer(param))
         .build()
 }
 
-private fun generateInitializer(
-    param: TargetParameter,
-    targets: List<TargetClass>
-): CodeBlock {
+private fun generateInitializer(param: TargetParameter): CodeBlock {
     val name = param.propertyName
     val type = param.type
 
-    if (type is ClassName && targets.map { it.type }.contains(type.copy(nullable = false))) {
-        // FIXME unsafe
-        return CodeBlock.of(
-            "(%L)?.to%L()",
-            getBaseInitializer(name, MAP.parameterizedBy(ANY, ANY)),
-            (type).simpleName
-        )
+    if (param.embedded) {
+        return CodeBlock.of("this%L", invokeToType(param.type as ClassName))
     }
 
     val supportedSources = FIREBASE_SUPPORTED_TYPES intersect param.supportedSources

@@ -4,21 +4,18 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 
 internal fun generateFunReceiverDocumentSnapshot(
-    target: TargetClass,
-    targets: List<TargetClass>
-) = generateFun(target, targets, FIREBASE_DOCUMENT_SNAPSHOT, ::generateLocalProperty)
+    target: TargetClass
+) = generateFun(target, FIREBASE_DOCUMENT_SNAPSHOT, ::generateLocalProperty)
 
 private fun generateLocalProperty(
-    param: TargetParameter,
-    targets: List<TargetClass>
+    param: TargetParameter
 ): PropertySpec = PropertySpec
     .builder(param.name, param.type)
-    .initializer(generateInitializer(param, targets))
+    .initializer(generateInitializer(param))
     .build()
 
 private fun generateInitializer(
-    param: TargetParameter,
-    targets: List<TargetClass> = emptyList()
+    param: TargetParameter
 ): CodeBlock {
     if (param.hasAnnotation(FIREBASE_DOCUMENT_ID)) {
         return CodeBlock.of("getId()") + param.convert(STRING)
@@ -27,12 +24,8 @@ private fun generateInitializer(
     val name = param.propertyName
     val type = param.type
 
-    if (type is ClassName && targets.map { it.type }.contains(type.copy(nullable = false))) {
-        // FIXME unsafe
-        return CodeBlock.of(
-            "(get(%S) as %T?)?.to%L()",
-            param.name, MAP.parameterizedBy(ANY, ANY), type.simpleName
-        )
+    if (param.embedded) {
+        return CodeBlock.of("this%L", invokeToType(param.type as ClassName))
     }
 
     val supportedSources = FIREBASE_SUPPORTED_TYPES intersect param.supportedSources
@@ -58,6 +51,26 @@ private fun getBaseInitializer(name: String, type: TypeName) = when (type.copy(n
     FIREBASE_BLOB,
     FIREBASE_GEO_POINT,
     FIREBASE_DOCUMENT_REFERENCE,
-    UTIL_DATE -> CodeBlock.of("get%L(%S)", (type as ClassName).simpleName, name)
+    UTIL_DATE -> {
+        val init = CodeBlock.of("get%L(%S)", (type as ClassName).simpleName, name)
+        if (type.isNullable) {
+            init
+        } else {
+            CodeBlock.of("requireNotNull(%L)", init)
+        }
+    }
+    MAP,
+    MAP.parameterizedBy(STRING, ANY),
+    MAP.parameterizedBy(STRING, ANY),
+    MAP.parameterizedBy(STRING, ANY.copy(nullable = false)),
+    MAP.parameterizedBy(ANY, ANY),
+    MAP.parameterizedBy(ANY, ANY.copy(nullable = true)) -> {
+        val init = CodeBlock.of("get(%S) as Map<String, Any?>", name)
+        if (type.isNullable) {
+            CodeBlock.of("(%L)", init)
+        } else {
+            CodeBlock.of("requireNotNull(%L)", init)
+        }
+    }
     else -> throw IllegalArgumentException("Type $type is unsupported.")
-}.wrapRequireNotNull(type.isNullable)
+}

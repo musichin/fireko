@@ -19,8 +19,8 @@ internal fun generateFile(target: TargetClass, targets: List<TargetClass>): File
                 addImport(it.packageName, listOf(toType(it)))
             }
         }
-        .addFunction(generateFunReceiverDocumentSnapshot(target, targets))
-        .addFunction(generateFunReceiverMap(target, targets))
+        .addFunction(generateFunReceiverDocumentSnapshot(target))
+        .addFunction(generateFunReceiverMap(target))
 //    .addFunction(generateFunTargetMap(target))
         .build()
 }

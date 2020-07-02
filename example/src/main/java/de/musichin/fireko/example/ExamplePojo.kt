@@ -4,6 +4,7 @@ import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.PropertyName
+import de.musichin.fireko.annotations.Embedded
 import de.musichin.fireko.annotations.Fireko
 import java.time.Instant
 import java.util.*
@@ -27,7 +28,8 @@ data class ExamplePojo(
     val charSequence: CharSequence,
     @Exclude val ignore: String? = null,
     val simpleEnum: SimpleEnum,
-    val complexEnum: ComplexEnum
+    val complexEnum: ComplexEnum,
+    @Embedded val embeddedPojo: EmbeddedPojo
 //    val a: A,
 //    val abc: B,
 //    val point: GeoPoint
@@ -39,6 +41,11 @@ data class B(val l: Long) {
         val a: B by map
     }
 }
+
+@Fireko
+data class EmbeddedPojo(
+    val a: String
+)
 
 enum class SimpleEnum {
     A,
