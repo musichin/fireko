@@ -2,11 +2,15 @@ package de.musichin.fireko.processor
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 import de.musichin.fireko.annotations.Fireko
 
-internal fun generateFile(target: TargetClass, targets: List<TargetClass>): FileSpec {
-    val targetTypes = targets.map { it.type }
-    val imports = target.includeParams
+@KotlinPoetMetadataPreview
+internal fun generateFile(context: Context, element: TargetElement): FileSpec {
+    val target = context.targetClass(element)
+        ?: throw IllegalArgumentException("Could not process meta information of ${element.className}")
+    val targetTypes = context.targetElements.map { it.className }
+    val imports = target.params
         .map { it.type.copy(nullable = false) }
         .filter { targetTypes.contains(it) }
         .minus(target.type)

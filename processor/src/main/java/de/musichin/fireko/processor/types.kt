@@ -3,6 +3,7 @@ package de.musichin.fireko.processor
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import de.musichin.fireko.annotations.Embedded
+import de.musichin.fireko.annotations.Fireko
 
 internal val FIREBASE_PROPERTY_NAME =
     ClassName("com.google.firebase.firestore", "PropertyName")
@@ -30,6 +31,9 @@ internal val BP_INSTANT =
 internal val EMBEDDED =
     ClassName(Embedded::class.java.`package`.name, Embedded::class.java.simpleName)
 
+internal val FIREKO =
+    ClassName(Fireko::class.java.`package`.name, Fireko::class.java.simpleName)
+
 
 internal val FIREBASE_SUPPORTED_TYPES = listOf(
     FIREBASE_DOCUMENT_REFERENCE,
@@ -41,7 +45,7 @@ internal val FIREBASE_SUPPORTED_TYPES = listOf(
     LONG,
     STRING,
     MAP.parameterizedBy(STRING, ANY),
-    MAP.parameterizedBy(STRING, ANY.copy(nullable = false)),
+    MAP.parameterizedBy(STRING, ANY.copy(nullable = true)),
     MAP.parameterizedBy(ANY, ANY),
     MAP.parameterizedBy(ANY, ANY.copy(nullable = true)),
     MAP

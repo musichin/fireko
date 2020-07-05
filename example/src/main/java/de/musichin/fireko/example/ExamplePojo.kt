@@ -1,9 +1,6 @@
 package de.musichin.fireko.example
 
-import com.google.firebase.firestore.DocumentId
-import com.google.firebase.firestore.Exclude
-import com.google.firebase.firestore.GeoPoint
-import com.google.firebase.firestore.PropertyName
+import com.google.firebase.firestore.*
 import de.musichin.fireko.annotations.Embedded
 import de.musichin.fireko.annotations.Fireko
 import java.time.Instant
@@ -12,7 +9,7 @@ import java.util.*
 @Fireko
 data class ExamplePojo(
     val firebaseGeoPoint: GeoPoint,
-    @DocumentId val id: String,
+//    @DocumentId val id: String,
     @DocumentId val idAsLong: Long,
     val str: String,
     @PropertyName("p_str") val pStr: String,
@@ -29,22 +26,20 @@ data class ExamplePojo(
     @Exclude val ignore: String? = null,
     val simpleEnum: SimpleEnum,
     val complexEnum: ComplexEnum,
-    @Embedded val embeddedPojo: EmbeddedPojo
-//    val a: A,
-//    val abc: B,
-//    val point: GeoPoint
+    @Embedded val embeddedPojo: EmbeddedPojo,
+    @Embedded val embeddedPojoWithDocId: EmbeddedPojoWithDocId,
+    val point: GeoPoint
 )
-
-data class B(val l: Long) {
-    fun te() {
-        val map = mutableMapOf<String, Any>()
-        val a: B by map
-    }
-}
 
 @Fireko
 data class EmbeddedPojo(
     val a: String
+)
+
+@Fireko
+data class EmbeddedPojoWithDocId(
+    @DocumentId
+    val idEmbedded: String
 )
 
 enum class SimpleEnum {

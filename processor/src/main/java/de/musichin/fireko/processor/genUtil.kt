@@ -4,11 +4,15 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.TypeName
 
-internal fun invokeToType(type: ClassName): CodeBlock =
-    invokeToType(type.isNullable, type.simpleName)
+internal fun invokeToType(type: ClassName, vararg arguments: String): CodeBlock =
+    invokeToType(type.isNullable, type.simpleName, *arguments)
 
-fun invokeToType(nullable: Boolean, type: String): CodeBlock =
-    CodeBlock.Builder().call(nullable).add(toType(type)).add("()").build()
+fun invokeToType(nullable: Boolean, type: String, vararg arguments: String): CodeBlock =
+    CodeBlock.Builder()
+        .call(nullable)
+        .add(toType(type))
+        .add("(${arguments.joinToString(",")})")
+        .build()
 
 internal fun CodeBlock.Builder.call(safe: Boolean = false) = apply {
     if (safe) {

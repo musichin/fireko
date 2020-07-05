@@ -2,30 +2,40 @@ package de.musichin.fireko.processor
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 
-internal fun generateFunReceiverDocumentSnapshot(
-    target: TargetClass
-) = generateFun(target, FIREBASE_DOCUMENT_SNAPSHOT, ::generateLocalProperty)
+@KotlinPoetMetadataPreview
+internal fun generateFunReceiverDocumentSnapshot(target: TargetClass) = FunSpec
+    .builder(toType(target.type))
+    .receiver(FIREBASE_DOCUMENT_SNAPSHOT)
+    .returns(target.type)
+    .apply {
+        val params = target.params
+        params.forEach { parameter ->
+            addCode("%L", generateLocalProperty(parameter))
+        }
 
-private fun generateLocalProperty(
-    param: TargetParameter
-): PropertySpec = PropertySpec
+        val paramNames = params.map { it.name }.joinToString(", ") { "$it = $it" }
+
+        addCode("return ${target.simpleName}($paramNames)")
+    }
+    .build()
+
+private fun generateLocalProperty(param: TargetParameter): PropertySpec = PropertySpec
     .builder(param.name, param.type)
     .initializer(generateInitializer(param))
     .build()
 
-private fun generateInitializer(
-    param: TargetParameter
-): CodeBlock {
-    if (param.hasAnnotation(FIREBASE_DOCUMENT_ID)) {
-        return CodeBlock.of("getId()") + param.convert(STRING)
-    }
-
+private fun generateInitializer(param: TargetParameter): CodeBlock {
     val name = param.propertyName
     val type = param.type
 
+    if (param.documentId) {
+        return CodeBlock.of("getId()") + param.convert(STRING)
+    }
+
     if (param.embedded) {
-        return CodeBlock.of("this%L", invokeToType(param.type as ClassName))
+        return CodeBlock.of("this%L", param.convert(FIREBASE_DOCUMENT_SNAPSHOT))
     }
 
     val supportedSources = FIREBASE_SUPPORTED_TYPES intersect param.supportedSources

@@ -30,13 +30,11 @@ class FirekoAnnotationProcessor : AbstractProcessor() {
         annotations: MutableSet<out TypeElement>?,
         roundEnv: RoundEnvironment?
     ): Boolean {
-        val targets = roundEnv?.getElementsAnnotatedWith(Fireko::class.java)
-            ?.mapNotNull { element ->
-                TargetClass.create(element, elements, classInspector)
-            }
+        val annotatedElements = roundEnv?.getElementsAnnotatedWith(Fireko::class.java).orEmpty()
+        val context = Context(annotatedElements, elements, classInspector)
 
-        targets?.forEach { target ->
-            process(target, targets)
+        context.targetElements.forEach { target ->
+            process(context, target)
         }
 
         return false
@@ -49,8 +47,8 @@ class FirekoAnnotationProcessor : AbstractProcessor() {
         classInspector = ElementsClassInspector.create(elements, env.typeUtils)
     }
 
-    private fun process(targetClass: TargetClass, targets: List<TargetClass>) {
-        val fileSpec = generateFile(targetClass, targets)
+    private fun process(context: Context, element: TargetElement) {
+        val fileSpec = generateFile(context, element)
         writeToFile(fileSpec)
     }
 

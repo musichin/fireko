@@ -3,11 +3,8 @@ package de.musichin.fireko.processor
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
-import com.squareup.kotlinpoet.metadata.specs.ClassInspector
-import com.squareup.kotlinpoet.metadata.specs.toTypeSpec
-import com.squareup.kotlinpoet.metadata.toImmutableKmClass
+import de.musichin.fireko.annotations.Fireko
 import javax.lang.model.element.AnnotationMirror
-import javax.lang.model.util.Elements
 
 internal sealed class TargetParameter(
     targetTypeSpec: TypeSpec,
@@ -26,6 +23,8 @@ internal sealed class TargetParameter(
     val propertyName: String = annotations.propertyName() ?: name
 
     val embedded: Boolean = hasAnnotation(EMBEDDED)
+
+    val documentId: Boolean = hasAnnotation(FIREBASE_DOCUMENT_ID)
 
     fun hasAnnotation(typeName: TypeName): Boolean = annotation(typeName) != null
 
@@ -62,35 +61,35 @@ internal sealed class TargetParameter(
 
         @KotlinPoetMetadataPreview
         fun create(
-            typeSpec: TypeSpec,
-            parameter: ParameterSpec,
-            elements: Elements,
-            classInspector: ClassInspector
+            context: Context,
+            element: TargetElement,
+            parameter: ParameterSpec
         ): TargetParameter {
             val paramClassName = (parameter.type as? ClassName)
-            val paramTypeSpec = paramClassName
-                ?.canonicalName
-                ?.let(elements::getTypeElement)
-                ?.getAnnotation(Metadata::class.java)
-                ?.toImmutableKmClass()
-                ?.toTypeSpec(classInspector, paramClassName)
+            val paramTargetClass = paramClassName?.let { context.targetClass(paramClassName) }
+            val paramTargetElement = paramClassName?.let { context.targetElement(paramClassName) }
+            val targetTypeSpec = element.typeSpec
 
-            if (paramTypeSpec?.isEnum == true) {
-                return EnumTargetParameter(typeSpec, parameter, paramTypeSpec)
+            if (paramTargetClass?.typeSpec?.isEnum == true) {
+                return EnumTargetParameter(targetTypeSpec, parameter, paramTargetClass.typeSpec)
+            }
+
+            if (paramTargetElement?.element?.getAnnotation(Fireko::class.java) != null) {
+                return TargetClassTargetParameter(context, element, parameter)
             }
 
             return when (parameter.type.copy(nullable = false)) {
                 STRING, CHAR_SEQUENCE ->
-                    StringTargetParameter(typeSpec, parameter)
+                    StringTargetParameter(targetTypeSpec, parameter)
                 NUMBER, BYTE, SHORT, INT, LONG, FLOAT, DOUBLE, CHAR ->
-                    NumberTargetParameter(typeSpec, parameter)
+                    NumberTargetParameter(targetTypeSpec, parameter)
                 TIME_INSTANT, BP_INSTANT ->
-                    InstantTargetParameter(typeSpec, parameter)
+                    InstantTargetParameter(targetTypeSpec, parameter)
                 UTIL_DATE ->
-                    DateTargetParameter(typeSpec, parameter)
+                    DateTargetParameter(targetTypeSpec, parameter)
                 FIREBASE_TIMESTAMP, FIREBASE_BLOB, FIREBASE_DOCUMENT_REFERENCE, FIREBASE_GEO_POINT ->
-                    IdentityTargetParameter(typeSpec, parameter)
-                else -> ClassTargetParameter(typeSpec, parameter, paramTypeSpec)
+                    IdentityTargetParameter(targetTypeSpec, parameter)
+                else -> throw IllegalArgumentException("Unsupported type $targetTypeSpec")
             }
         }
     }
@@ -244,24 +243,70 @@ private class IdentityTargetParameter(
     }
 }
 
-internal class ClassTargetParameter(
-    targetTypeSpec: TypeSpec,
-    parameterSpec: ParameterSpec,
-    typeSpec: TypeSpec?
-) : TargetParameter(targetTypeSpec, parameterSpec) {
+//internal class ClassTargetParameter(
+//    targetTypeSpec: TypeSpec,
+//    parameterSpec: ParameterSpec
+//) : TargetParameter(targetTypeSpec, parameterSpec) {
+//
+//    override val supportedSources: List<TypeName> = listOf(
+//        FIREBASE_DOCUMENT_SNAPSHOT,
+//        MAP.parameterizedBy(STRING, ANY),
+//        MAP.parameterizedBy(STRING, ANY.copy(nullable = false)),
+//        MAP.parameterizedBy(ANY, ANY),
+//        MAP.parameterizedBy(ANY, ANY.copy(nullable = true)),
+//        MAP
+//    )
+//
+//    override fun convert(source: TypeName): CodeBlock = when (source) {
+//        FIREBASE_DOCUMENT_SNAPSHOT ->
+//            CodeBlock.Builder().add(invokeToType(type as ClassName)).build()
+//        MAP.parameterizedBy(STRING, ANY),
+//        MAP.parameterizedBy(STRING, ANY.copy(nullable = false)),
+//        MAP.parameterizedBy(ANY, ANY),
+//        MAP.parameterizedBy(ANY, ANY.copy(nullable = true)),
+//        MAP -> CodeBlock.Builder().add(invokeToType(type as ClassName))
+//            .build() // TODO pass doc id param
+//        else -> throw IllegalArgumentException("Cannot convert $source to $type")
+//    }
+//}
+
+@KotlinPoetMetadataPreview
+internal class TargetClassTargetParameter(
+    private val context: Context,
+    private val element: TargetElement,
+    val parameterSpec: ParameterSpec
+) : TargetParameter(element.typeSpec, parameterSpec) {
 
     override val supportedSources: List<TypeName> = listOf(
         FIREBASE_DOCUMENT_SNAPSHOT,
         MAP.parameterizedBy(STRING, ANY),
-        MAP.parameterizedBy(STRING, ANY.copy(nullable = false)),
+        MAP.parameterizedBy(STRING, ANY.copy(nullable = true)),
         MAP.parameterizedBy(ANY, ANY),
         MAP.parameterizedBy(ANY, ANY.copy(nullable = true)),
         MAP
     )
 
-    override fun convert(source: TypeName): CodeBlock {
-        println(annotations)
-        return CodeBlock.Builder().add(invokeToType(type as ClassName)).build()
+    override fun convert(source: TypeName): CodeBlock = when (source) {
+        FIREBASE_DOCUMENT_SNAPSHOT ->
+            CodeBlock.Builder().add(invokeToType(type as ClassName)).build()
+        MAP.parameterizedBy(STRING, ANY),
+        MAP.parameterizedBy(STRING, ANY.copy(nullable = true)),
+        MAP.parameterizedBy(ANY, ANY),
+        MAP.parameterizedBy(ANY, ANY.copy(nullable = true)),
+        MAP -> {
+            // do I need id?
+            val paramTargetClass = context.targetClass(parameterSpec.type as ClassName)
+            val paramNames = if (paramTargetClass?.needsDocumentId == true) {
+                val paramName = context.targetClass(element)?.documentIdParamSpec?.name
+                listOfNotNull(paramName)
+            } else {
+                emptyList()
+            }
+            CodeBlock.Builder()
+                .add(invokeToType(type as ClassName, *paramNames.toTypedArray()))
+                .build()
+        }
+        else -> throw IllegalArgumentException("Cannot convert $source to $type")
     }
 }
 
