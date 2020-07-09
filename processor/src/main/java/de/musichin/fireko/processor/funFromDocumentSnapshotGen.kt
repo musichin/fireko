@@ -7,6 +7,7 @@ import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 @KotlinPoetMetadataPreview
 internal fun generateFunReceiverDocumentSnapshot(target: TargetClass) = FunSpec
     .builder(toType(target.type))
+    .addKdoc("Converts %T to %T.", FIREBASE_DOCUMENT_SNAPSHOT, target.type)
     .receiver(FIREBASE_DOCUMENT_SNAPSHOT)
     .returns(target.type)
     .apply {
@@ -31,11 +32,11 @@ private fun generateInitializer(param: TargetParameter): CodeBlock {
     val type = param.type
 
     if (param.documentId) {
-        return CodeBlock.of("getId()") + param.convert(STRING)
+        return CodeBlock.of("getId()") + param.convertFrom(STRING)
     }
 
     if (param.embedded) {
-        return CodeBlock.of("this%L", param.convert(FIREBASE_DOCUMENT_SNAPSHOT))
+        return CodeBlock.of("this%L", param.convertFrom(FIREBASE_DOCUMENT_SNAPSHOT))
     }
 
     val supportedSources = FIREBASE_SUPPORTED_TYPES intersect param.supportedSources
@@ -44,12 +45,12 @@ private fun generateInitializer(param: TargetParameter): CodeBlock {
         return initializerByType(source, param)
     }
 
-    return getBaseInitializer(name, type) + param.convert(type)
+    return getBaseInitializer(name, type) + param.convertFrom(type)
 }
 
 private fun initializerByType(type: TypeName, param: TargetParameter): CodeBlock {
     val source = type.copy(nullable = param.type.isNullable)
-    return getBaseInitializer(param.propertyName, source) + param.convert(source)
+    return getBaseInitializer(param.propertyName, source) + param.convertFrom(source)
 }
 
 private fun getBaseInitializer(name: String, type: TypeName) = when (type.copy(nullable = false)) {

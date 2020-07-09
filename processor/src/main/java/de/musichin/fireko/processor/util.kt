@@ -16,3 +16,6 @@ fun TypeName.isAssignable(initializer: TypeName): Boolean {
     if (this.copy(nullable = false) != initializer.copy(nullable = false)) return false
     return this.isNullable
 }
+
+val TypeName.notNullable: TypeName get() = copy(nullable = false)
+val TypeName.nullable: TypeName get() = copy(nullable = true)

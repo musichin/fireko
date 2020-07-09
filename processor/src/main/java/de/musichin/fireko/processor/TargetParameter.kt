@@ -30,9 +30,27 @@ internal sealed class TargetParameter(
 
     fun annotation(typeName: TypeName): AnnotationSpec? = annotations.get(typeName)
 
-    abstract fun convert(source: TypeName): CodeBlock
+    open fun convertFrom(source: TypeName): CodeBlock {
+        if (isIdentityType(source)) {
+            throw IllegalArgumentException("Source $source is unsupported.")
+        }
 
-    abstract val supportedSources: List<TypeName>
+        return CodeBlock.of("")
+    }
+
+    open fun convertTo(target: TypeName): CodeBlock {
+        if (isIdentityType(target)) {
+            throw IllegalArgumentException("Target $target is unsupported.")
+        }
+
+        return CodeBlock.of("")
+    }
+
+    private fun isIdentityType(typeName: TypeName) =
+        typeName.copy(nullable = false) != type.copy(nullable = false)
+
+    open val supportedSources: List<TypeName> = listOf(type.copy(nullable = false))
+    open val supportedTargets: List<TypeName> = listOf(type.copy(nullable = false))
 
     open fun selectSource(sources: Collection<TypeName>): TypeName {
         if (sources.contains(type.copy(nullable = false))) {
@@ -40,6 +58,14 @@ internal sealed class TargetParameter(
         }
 
         return supportedSources.find(sources::contains) ?: sources.first()
+    }
+
+    open fun selectTarget(targets: Collection<TypeName>): TypeName {
+        if (targets.contains(type.copy(nullable = false))) {
+            return type.copy(nullable = false)
+        }
+
+        return supportedTargets.find(targets::contains) ?: targets.first()
     }
 
     companion object {
@@ -83,10 +109,8 @@ internal sealed class TargetParameter(
                     StringTargetParameter(targetTypeSpec, parameter)
                 NUMBER, BYTE, SHORT, INT, LONG, FLOAT, DOUBLE, CHAR ->
                     NumberTargetParameter(targetTypeSpec, parameter)
-                TIME_INSTANT, BP_INSTANT ->
-                    InstantTargetParameter(targetTypeSpec, parameter)
-                UTIL_DATE ->
-                    DateTargetParameter(targetTypeSpec, parameter)
+                TIME_INSTANT, BP_INSTANT, UTIL_DATE ->
+                    TimeTargetParameter(targetTypeSpec, parameter)
                 FIREBASE_TIMESTAMP, FIREBASE_BLOB, FIREBASE_DOCUMENT_REFERENCE, FIREBASE_GEO_POINT ->
                     IdentityTargetParameter(targetTypeSpec, parameter)
                 else -> throw IllegalArgumentException("Unsupported type $targetTypeSpec")
@@ -100,10 +124,26 @@ private class StringTargetParameter(
     parameterSpec: ParameterSpec
 ) : TargetParameter(targetTypeSpec, parameterSpec) {
     override val supportedSources: List<TypeName> = listOf(STRING, CHAR_SEQUENCE)
+    override val supportedTargets: List<TypeName> = listOf(STRING, CHAR_SEQUENCE)
 
-    override fun convert(source: TypeName): CodeBlock = when (source.copy(nullable = false)) {
+    override fun convertFrom(source: TypeName): CodeBlock = when (source.copy(nullable = false)) {
+        CHAR_SEQUENCE -> when (type) {
+            STRING -> CodeBlock.of(".toString()")
+            CHAR_SEQUENCE -> CodeBlock.of("")
+            else -> super.convertFrom(source)
+        }
         STRING -> CodeBlock.of("")
-        else -> throw IllegalArgumentException("Cannot convert $source to String")
+        else -> super.convertFrom(source)
+    }
+
+    override fun convertTo(target: TypeName): CodeBlock = when (target.copy(nullable = false)) {
+        CHAR_SEQUENCE -> CodeBlock.of("")
+        STRING -> when (type.copy(nullable = false)) {
+            STRING -> CodeBlock.of("")
+            CHAR_SEQUENCE -> CodeBlock.of(".toString()")
+            else -> super.convertTo(target)
+        }
+        else -> super.convertTo(target)
     }
 }
 
@@ -111,8 +151,12 @@ private class NumberTargetParameter(
     targetTypeSpec: TypeSpec,
     parameterSpec: ParameterSpec
 ) : TargetParameter(targetTypeSpec, parameterSpec) {
-    override val supportedSources: List<TypeName> =
+    private val supportedTypes: List<TypeName> =
         listOf(BYTE, SHORT, INT, LONG, FLOAT, DOUBLE, CHAR, NUMBER)
+
+    override val supportedSources: List<TypeName> get() = supportedTypes
+
+    override val supportedTargets: List<TypeName> get() = supportedTypes
 
     override fun selectSource(sources: Collection<TypeName>): TypeName {
         val type = type.copy(nullable = false)
@@ -130,31 +174,60 @@ private class NumberTargetParameter(
             sources.contains(SHORT) && !isFloating(type) -> SHORT
             sources.contains(BYTE) && !isFloating(type) -> BYTE
             sources.contains(CHAR) && !isFloating(type) -> CHAR
-            else -> sources.first()
+            else -> super.selectSource(sources)
         }
     }
 
-    override fun convert(source: TypeName): CodeBlock {
-        if (source == type) {
+    override fun selectTarget(targets: Collection<TypeName>): TypeName {
+        val type = type.copy(nullable = false)
+
+        if (targets.contains(type)) {
+            return type
+        }
+
+        return when {
+            // FIXME
+//            sources.contains(DOUBLE) && type == NUMBER -> DOUBLE
+//            sources.contains(DOUBLE) && isFloating(type) -> DOUBLE
+//            sources.contains(FLOAT) && isFloating(type) -> FLOAT
+//            sources.contains(LONG) && !isFloating(type) -> LONG
+//            sources.contains(INT) && !isFloating(type) -> INT
+//            sources.contains(SHORT) && !isFloating(type) -> SHORT
+//            sources.contains(BYTE) && !isFloating(type) -> BYTE
+//            sources.contains(CHAR) && !isFloating(type) -> CHAR
+            else -> super.selectSource(targets)
+        }
+    }
+
+    override fun convertFrom(source: TypeName): CodeBlock {
+        return convert(source, type)
+    }
+
+    override fun convertTo(target: TypeName): CodeBlock {
+        return convert(type, target)
+    }
+
+    private fun convert(source: TypeName, target: TypeName): CodeBlock {
+        if (source.copy(nullable = false) == target.copy(nullable = false)) {
             return CodeBlock.of("")
         }
 
-        if (isNumber(source) && type.copy(nullable = false) == NUMBER) {
+        if (isNumber(source) && target.copy(nullable = false) == NUMBER) {
             return CodeBlock.of("")
         }
 
         if (isNumber(source)) {
-            return invokeToType(type as ClassName)
+            return invokeToType(source.isNullable, (target as ClassName).simpleName)
         }
 
         if (source.copy(nullable = false) == STRING) {
-            return invokeToType(type as ClassName)
+            return invokeToType(source.isNullable, (target as ClassName).simpleName)
         }
 
         // TODO Rational
         // TODO BigDecimal
 
-        throw IllegalArgumentException("Cannot convert $source to $type")
+        return super.convertFrom(source)
     }
 
     private fun isNumber(typeName: TypeName): Boolean = when (typeName.copy(nullable = false)) {
@@ -168,18 +241,27 @@ private class NumberTargetParameter(
     }
 }
 
-private class InstantTargetParameter(
+private class TimeTargetParameter(
     targetTypeSpec: TypeSpec,
     parameterSpec: ParameterSpec
 ) : TargetParameter(targetTypeSpec, parameterSpec) {
     override val supportedSources: List<TypeName> =
         listOf(FIREBASE_TIMESTAMP, BP_INSTANT, TIME_INSTANT, UTIL_DATE, LONG)
 
-    override fun convert(source: TypeName): CodeBlock = when (source.copy(nullable = false)) {
-        BP_INSTANT, TIME_INSTANT ->
+    override val supportedTargets: List<TypeName> =
+        listOf(FIREBASE_TIMESTAMP/*, BP_INSTANT, TIME_INSTANT, UTIL_DATE, LONG*/)
+
+    override fun convertFrom(source: TypeName): CodeBlock = convert(source, type)
+
+    override fun convertTo(target: TypeName): CodeBlock = convert(type, target)
+
+    private fun convert(from: TypeName, to: TypeName): CodeBlock = when {
+        from.notNullable == to.notNullable ->
             CodeBlock.of("")
-        FIREBASE_TIMESTAMP ->
-            CodeBlock.Builder().call(source)
+
+        from.notNullable == FIREBASE_TIMESTAMP &&
+                (to.notNullable == TIME_INSTANT || to.notNullable == BP_INSTANT) ->
+            CodeBlock.Builder().call(from)
                 .beginControlFlow("let")
                 .addStatement(
                     "%T.ofEpochSecond(it.seconds, it.nanoseconds.toLong())",
@@ -187,8 +269,10 @@ private class InstantTargetParameter(
                 )
                 .endControlFlow()
                 .build()
-        UTIL_DATE ->
-            CodeBlock.Builder().call(source)
+
+        (from.notNullable == TIME_INSTANT || from.notNullable == BP_INSTANT) &&
+                to.notNullable == UTIL_DATE ->
+            CodeBlock.Builder().call(from)
                 .beginControlFlow("let")
                 .addStatement(
                     "%T.ofEpochMilli(it.time)",
@@ -196,52 +280,42 @@ private class InstantTargetParameter(
                 )
                 .endControlFlow()
                 .build()
-        LONG -> CodeBlock.Builder().call(source)
-            .beginControlFlow("let")
-            .addStatement(
-                "%T.ofEpochMilli(it)",
-                type.copy(nullable = false)
-            )
-            .endControlFlow()
-            .build()
-        else -> throw IllegalArgumentException("Cannot convert $source to $type")
-    }
-}
 
-private class DateTargetParameter(
-    targetTypeSpec: TypeSpec,
-    parameterSpec: ParameterSpec
-) : TargetParameter(targetTypeSpec, parameterSpec) {
-    override val supportedSources: List<TypeName> = listOf(FIREBASE_TIMESTAMP, UTIL_DATE, LONG)
-
-    override fun convert(source: TypeName): CodeBlock = when (source.copy(nullable = false)) {
-        UTIL_DATE ->
-            CodeBlock.of("")
-        FIREBASE_TIMESTAMP ->
-            invokeToType(UTIL_DATE)
-        LONG ->
-            CodeBlock.Builder().call(source)
+        from.notNullable == FIREBASE_TIMESTAMP && to.notNullable == LONG ->
+            CodeBlock.Builder().call(from)
                 .beginControlFlow("let")
-                .addStatement("%T(it)", UTIL_DATE)
+                .addStatement(
+                    "%T.ofEpochMilli(it)",
+                    type.copy(nullable = false)
+                )
                 .endControlFlow()
                 .build()
-        else -> throw IllegalArgumentException("Cannot convert $source to $type")
+
+        (from.notNullable == TIME_INSTANT || from.notNullable == BP_INSTANT) &&
+                to.notNullable == FIREBASE_TIMESTAMP ->
+            CodeBlock.Builder()
+                .call(type)
+                .beginControlFlow("let")
+                .addStatement("%T(it.epochSecond, it.nano)", FIREBASE_TIMESTAMP)
+                .endControlFlow()
+                .build()
+
+        from.notNullable == UTIL_DATE &&
+                to.notNullable == FIREBASE_TIMESTAMP ->
+            CodeBlock.of(".let(::%T)", FIREBASE_TIMESTAMP)
+
+        from.notNullable == FIREBASE_TIMESTAMP &&
+                to.notNullable == UTIL_DATE ->
+            invokeToType(UTIL_DATE)
+
+        else -> throw IllegalArgumentException("Could not convert $from to $to.")
     }
 }
 
 private class IdentityTargetParameter(
     targetTypeSpec: TypeSpec,
     parameterSpec: ParameterSpec
-) : TargetParameter(targetTypeSpec, parameterSpec) {
-    override val supportedSources: List<TypeName> = listOf(type.copy(nullable = false))
-
-    override fun convert(source: TypeName): CodeBlock {
-        if (source.copy(nullable = false) == type.copy(nullable = false)) {
-            return CodeBlock.of("")
-        }
-        throw IllegalArgumentException("Cannot convert $source to $type")
-    }
-}
+) : TargetParameter(targetTypeSpec, parameterSpec)
 
 //internal class ClassTargetParameter(
 //    targetTypeSpec: TypeSpec,
@@ -286,7 +360,15 @@ internal class TargetClassTargetParameter(
         MAP
     )
 
-    override fun convert(source: TypeName): CodeBlock = when (source) {
+    override val supportedTargets: List<TypeName> = listOf(
+        MAP.parameterizedBy(STRING, ANY),
+        MAP.parameterizedBy(STRING, ANY.copy(nullable = true)),
+        MAP.parameterizedBy(ANY, ANY),
+        MAP.parameterizedBy(ANY, ANY.copy(nullable = true)),
+        MAP
+    )
+
+    override fun convertFrom(source: TypeName): CodeBlock = when (source) {
         FIREBASE_DOCUMENT_SNAPSHOT ->
             CodeBlock.Builder().add(invokeToType(type as ClassName)).build()
         MAP.parameterizedBy(STRING, ANY),
@@ -306,7 +388,21 @@ internal class TargetClassTargetParameter(
                 .add(invokeToType(type as ClassName, *paramNames.toTypedArray()))
                 .build()
         }
-        else -> throw IllegalArgumentException("Cannot convert $source to $type")
+        else -> super.convertFrom(source)
+    }
+
+    override fun convertTo(target: TypeName): CodeBlock = when (target) {
+        MAP.parameterizedBy(STRING, ANY),
+        MAP.parameterizedBy(STRING, ANY.copy(nullable = true)),
+        MAP.parameterizedBy(ANY, ANY),
+        MAP.parameterizedBy(ANY, ANY.copy(nullable = true)),
+        MAP -> {
+            CodeBlock.Builder()
+                .call(type.isNullable)
+                .add("toMap()")
+                .build()
+        }
+        else -> super.convertTo(target)
     }
 }
 
@@ -315,13 +411,16 @@ internal class EnumTargetParameter(
     parameterSpec: ParameterSpec,
     typeSpec: TypeSpec
 ) : TargetParameter(targetTypeSpec, parameterSpec) {
-    override val supportedSources: List<TypeName> = listOf(STRING)
+    private val supportedTypes = listOf(STRING)
+
+    override val supportedSources: List<TypeName> get() = supportedTypes
+    override val supportedTargets: List<TypeName> get() = supportedTypes
 
     private val propertyNames: Map<String, String> = typeSpec.enumConstants
         .mapNotNull { (name, spec) -> spec.annotationSpecs.propertyName()?.let { name to it } }
         .toMap()
 
-    override fun convert(source: TypeName): CodeBlock {
+    override fun convertFrom(source: TypeName): CodeBlock {
         if (propertyNames.isEmpty()) {
             return useValueOf()
         }
@@ -350,6 +449,33 @@ internal class EnumTargetParameter(
                 type.copy(nullable = false)
             )
             .endControlFlow()
+            .build()
+    }
+
+    override fun convertTo(target: TypeName): CodeBlock {
+        if (propertyNames.isEmpty()) {
+            return useName()
+        }
+
+        return CodeBlock.Builder()
+            .call(type)
+            .beginControlFlow("let")
+            .beginControlFlow("when (it)")
+            .apply {
+                propertyNames.forEach { (name, propertyName) ->
+                    addStatement("%T.%L -> %S", type, name, propertyName)
+                }
+            }
+            .addStatement("else -> it.name")
+            .endControlFlow()
+            .endControlFlow()
+            .build()
+    }
+
+    private fun useName(): CodeBlock {
+        return CodeBlock.builder()
+            .call(type)
+            .add("name")
             .build()
     }
 }

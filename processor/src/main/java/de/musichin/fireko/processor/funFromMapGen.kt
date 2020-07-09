@@ -7,6 +7,12 @@ import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 @KotlinPoetMetadataPreview
 internal fun generateFunReceiverMap(target: TargetClass) = FunSpec
     .builder(toType(target.type))
+    .addKdoc(
+        "Converts %T obtained from %T from to %T.",
+        MAP.parameterizedBy(STRING, ANY.copy(nullable = true)),
+        FIREBASE_DOCUMENT_SNAPSHOT,
+        target.type
+    )
     .receiver(MAP.parameterizedBy(STRING, ANY.copy(nullable = true)))
     .returns(target.type)
     .apply {
@@ -27,7 +33,7 @@ internal fun generateFunReceiverMap(target: TargetClass) = FunSpec
 
             remainingParams.forEach { param ->
                 val propertySpec = PropertySpec.builder(param.name, param.type)
-                    .initializer("%L%L", docIdParam.name, param.convert(docIdParam.type))
+                    .initializer("%L%L", docIdParam.name, param.convertFrom(docIdParam.type))
                     .build()
                 addCode("%L", propertySpec)
             }
@@ -57,7 +63,10 @@ private fun generateInitializer(param: TargetParameter): CodeBlock {
     }
 
     if (param.embedded) {
-        return CodeBlock.of("this%L", param.convert(MAP.parameterizedBy(STRING, ANY.copy(nullable = true))))
+        return CodeBlock.of(
+            "this%L",
+            param.convertFrom(MAP.parameterizedBy(STRING, ANY.copy(nullable = true)))
+        )
     }
 
     val supportedSources = FIREBASE_SUPPORTED_TYPES intersect param.supportedSources
@@ -71,7 +80,7 @@ private fun generateInitializer(param: TargetParameter): CodeBlock {
 
 private fun initializerByType(type: TypeName, param: TargetParameter): CodeBlock {
     val source = type.copy(nullable = param.type.isNullable)
-    return getBaseInitializer(param.propertyName, source) + param.convert(source)
+    return getBaseInitializer(param.propertyName, source) + param.convertFrom(source)
 }
 
 private fun getBaseInitializer(name: String, type: TypeName): CodeBlock =

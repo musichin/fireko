@@ -1,5 +1,6 @@
 package de.musichin.fireko.example
 
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.*
 import de.musichin.fireko.annotations.Embedded
 import de.musichin.fireko.annotations.Fireko
@@ -28,8 +29,12 @@ data class ExamplePojo(
     val complexEnum: ComplexEnum,
     @Embedded val embeddedPojo: EmbeddedPojo,
     @Embedded val embeddedPojoWithDocId: EmbeddedPojoWithDocId,
-    val point: GeoPoint
+    val point: GeoPoint,
+    val anotherPojo: AnotherPojo
 )
+
+@Fireko
+data class AnotherPojo(val d: Long)
 
 @Fireko
 data class EmbeddedPojo(

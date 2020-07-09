@@ -21,10 +21,11 @@ internal fun generateFile(context: Context, element: TargetElement): FileSpec {
         .apply {
             imports.forEach {
                 addImport(it.packageName, listOf(toType(it)))
+                addImport(it.packageName, "toMap")
             }
         }
         .addFunction(generateFunReceiverDocumentSnapshot(target))
         .addFunction(generateFunReceiverMap(target))
-//    .addFunction(generateFunTargetMap(target))
+        .addFunction(generateFunTargetMap(target))
         .build()
 }
