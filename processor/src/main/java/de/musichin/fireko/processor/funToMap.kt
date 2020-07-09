@@ -26,11 +26,19 @@ internal fun generateFunTargetMap(target: TargetClass) = FunSpec
 
 @KotlinPoetMetadataPreview
 private fun putter(param: TargetParameter): CodeBlock {
-    if (param.embedded) {
-        return CodeBlock.of("putAll(%L)\n", getter(param))
-    }
-
-    return CodeBlock.of("put(%S, %L)\n", param.propertyName, getter(param))
+    return CodeBlock.builder()
+        .add("%L", getter(param))
+        .call(param.type)
+        .beginControlFlow("let")
+        .apply {
+            if (param.embedded) {
+                addStatement("putAll(it)")
+            } else {
+                addStatement("put(%S, it)", param.propertyName)
+            }
+        }
+        .endControlFlow()
+        .build()
 }
 
 @KotlinPoetMetadataPreview
@@ -45,6 +53,5 @@ private fun convertFrom(param: TargetParameter): CodeBlock {
         return param.convertTo(target)
     }
 
-    // FIXME
-    return CodeBlock.of(".let{TODO()}")
+    throw IllegalArgumentException("Could not generate converter for ${param.name}")
 }
