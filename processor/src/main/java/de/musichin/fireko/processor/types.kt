@@ -21,6 +21,10 @@ internal val FIREBASE_DOCUMENT_REFERENCE =
     ClassName("com.google.firebase.firestore", "DocumentReference")
 internal val FIREBASE_DOCUMENT_ID =
     ClassName("com.google.firebase.firestore", "DocumentId")
+internal val FIREBASE_SERVER_TIMESTAMP =
+    ClassName("com.google.firebase.firestore", "ServerTimestamp")
+internal val FIREBASE_FIELD_VALUE =
+    ClassName("com.google.firebase.firestore", "FieldValue")
 internal val UTIL_DATE =
     ClassName("java.util", "Date")
 internal val TIME_INSTANT =
@@ -30,9 +34,6 @@ internal val BP_INSTANT =
 
 internal val EMBEDDED =
     ClassName(Embedded::class.java.`package`.name, Embedded::class.java.simpleName)
-
-internal val FIREKO =
-    ClassName(Fireko::class.java.`package`.name, Fireko::class.java.simpleName)
 
 
 internal val FIREBASE_SUPPORTED_TYPES = listOf(

@@ -26,6 +26,8 @@ internal sealed class TargetParameter(
 
     val documentId: Boolean = hasAnnotation(FIREBASE_DOCUMENT_ID)
 
+    val serverTimestamp: Boolean = hasAnnotation(FIREBASE_SERVER_TIMESTAMP)
+
     fun hasAnnotation(typeName: TypeName): Boolean = annotation(typeName) != null
 
     fun annotation(typeName: TypeName): AnnotationSpec? = annotations.get(typeName)

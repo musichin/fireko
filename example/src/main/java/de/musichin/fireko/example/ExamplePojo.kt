@@ -34,7 +34,9 @@ data class ExamplePojo(
 )
 
 @Fireko
-data class AnotherPojo(val d: Long)
+data class AnotherPojo(
+    @ServerTimestamp val d: Instant?
+)
 
 @Fireko
 data class EmbeddedPojo(
