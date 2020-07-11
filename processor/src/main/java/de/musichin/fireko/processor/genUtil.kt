@@ -8,11 +8,17 @@ internal fun invokeToType(type: ClassName, vararg arguments: String): CodeBlock 
     invokeToType(type.isNullable, type.simpleName, *arguments)
 
 fun invokeToType(nullable: Boolean, type: String, vararg arguments: String): CodeBlock =
-    CodeBlock.Builder()
-        .call(nullable)
-        .add(toType(type))
-        .add("(${arguments.joinToString(",")})")
-        .build()
+    CodeBlock.Builder().invokeToType(nullable, type, *arguments).build()
+
+fun CodeBlock.Builder.invokeToType(
+    nullable: Boolean,
+    type: String,
+    vararg arguments: String
+): CodeBlock.Builder = apply {
+    call(nullable)
+    add(toType(type))
+    add("(${arguments.joinToString(",")})")
+}
 
 internal fun CodeBlock.Builder.call(safe: Boolean = false) = apply {
     if (safe) {

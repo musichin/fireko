@@ -8,9 +8,10 @@ import java.time.Instant
 import java.util.*
 
 @Fireko
-data class ExamplePojo(
+data class
+ExamplePojo(
     val firebaseGeoPoint: GeoPoint,
-//    @DocumentId val id: String,
+    @DocumentId val id: String,
     @DocumentId val idAsLong: Long,
     val str: String,
     @PropertyName("p_str") val pStr: String,

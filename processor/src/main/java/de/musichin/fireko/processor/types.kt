@@ -37,17 +37,17 @@ internal val EMBEDDED =
 
 
 internal val FIREBASE_SUPPORTED_TYPES = listOf(
-    FIREBASE_DOCUMENT_REFERENCE,
-    FIREBASE_TIMESTAMP,
-    FIREBASE_GEO_POINT,
-    FIREBASE_BLOB,
-    BOOLEAN,
-    DOUBLE,
-    LONG,
-    STRING,
-    MAP.parameterizedBy(STRING, ANY),
-    MAP.parameterizedBy(STRING, ANY.copy(nullable = true)),
-    MAP.parameterizedBy(ANY, ANY),
-    MAP.parameterizedBy(ANY, ANY.copy(nullable = true)),
-    MAP
+    FIREBASE_DOCUMENT_REFERENCE.copy(nullable = true),
+    FIREBASE_TIMESTAMP.copy(nullable = true),
+    FIREBASE_GEO_POINT.copy(nullable = true),
+    FIREBASE_BLOB.copy(nullable = true),
+    BOOLEAN.copy(nullable = true),
+    DOUBLE.copy(nullable = true),
+    LONG.copy(nullable = true),
+    STRING.copy(nullable = true),
+    MAP.parameterizedBy(STRING, ANY).copy(nullable = true),
+    MAP.parameterizedBy(STRING, ANY.copy(nullable = true)).copy(nullable = true),
+    MAP.parameterizedBy(ANY, ANY).copy(nullable = true),
+    MAP.parameterizedBy(ANY, ANY.copy(nullable = true)).copy(nullable = true),
+    MAP.copy(nullable = true)
 )

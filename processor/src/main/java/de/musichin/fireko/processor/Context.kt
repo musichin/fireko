@@ -35,6 +35,10 @@ internal class Context(
         return targetClass(element.className)
     }
 
+    fun typeSpec(className: ClassName): TypeSpec? {
+        return targetElement(className)?.typeSpec
+    }
+
     private fun getOrCreateTargetElement(className: ClassName): TargetElement? {
         return otherTargetElements.getOrPut(className) {
             val element = className.canonicalName.let(elements::getTypeElement)
@@ -42,13 +46,6 @@ internal class Context(
             val typeSpec = meta?.toImmutableKmClass()?.toTypeSpec(classInspector, className)
             typeSpec?.let { TargetElement(element, className, it) }
         }
-    }
-
-    private fun typeSpec(className: ClassName): TypeSpec? {
-        return className.canonicalName.let(elements::getTypeElement)
-            ?.getAnnotation(Metadata::class.java)
-            ?.toImmutableKmClass()
-            ?.toTypeSpec(classInspector, className)
     }
 
     companion object {

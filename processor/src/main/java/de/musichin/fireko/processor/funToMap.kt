@@ -48,7 +48,7 @@ private fun CodeBlock.Builder.putParam(param: TargetParameter): CodeBlock.Builde
     if (param.embedded) {
         add("putAll(%L)\n", getter(param))
     } else {
-        add("put(%S, %L)\n", param.propertyName, getter(param))
+        add("put(%S, it)\n", param.propertyName)
     }
 
 @KotlinPoetMetadataPreview
@@ -56,11 +56,6 @@ private fun getter(param: TargetParameter): CodeBlock =
     CodeBlock.of(param.name) + convertFrom(param)
 
 private fun convertFrom(param: TargetParameter): CodeBlock {
-    val supportedTargets = FIREBASE_SUPPORTED_TYPES intersect param.supportedTargets
-    if (supportedTargets.isNotEmpty()) {
-        val target = param.selectTarget(supportedTargets)
-        return param.convertTo(target)
-    }
-
-    throw IllegalArgumentException("Could not generate converter for ${param.name}")
+    val target = param.selectTarget(FIREBASE_SUPPORTED_TYPES)
+    return param.convertTo(target)
 }

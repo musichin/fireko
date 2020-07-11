@@ -13,7 +13,7 @@ fun List<AnnotationSpec>.get(typeName: TypeName): AnnotationSpec? =
 
 fun TypeName.isAssignable(initializer: TypeName): Boolean {
     if (this == initializer) return true
-    if (this.copy(nullable = false) != initializer.copy(nullable = false)) return false
+    if (this.notNullable != initializer.notNullable) return false
     return this.isNullable
 }
 

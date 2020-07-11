@@ -56,7 +56,6 @@ private fun generateLocalProperty(param: TargetParameter): PropertySpec = Proper
 
 private fun generateInitializer(param: TargetParameter): CodeBlock {
     val name = param.propertyName
-    val type = param.type
 
     if (param.documentId) {
         return CodeBlock.of("TODO()")
@@ -69,36 +68,28 @@ private fun generateInitializer(param: TargetParameter): CodeBlock {
         )
     }
 
-    val supportedSources = FIREBASE_SUPPORTED_TYPES intersect param.supportedSources
-    if (supportedSources.isNotEmpty()) {
-        val source = param.selectSource(supportedSources)
-        return initializerByType(source, param)
-    }
-
-    return getBaseInitializer(name, type)
+    val source = param.selectSource(FIREBASE_SUPPORTED_TYPES).nullable
+    return CodeBlock.builder()
+        .add(getBaseInitializer(name, source))
+        .add(param.convertFrom(source))
+        .build()
 }
 
-private fun initializerByType(type: TypeName, param: TargetParameter): CodeBlock {
-    val source = type.copy(nullable = param.type.isNullable)
-    return getBaseInitializer(param.propertyName, source) + param.convertFrom(source)
+private fun getBaseInitializer(name: String, type: TypeName): CodeBlock = when (type.notNullable) {
+    BOOLEAN,
+    STRING,
+    LONG,
+    DOUBLE,
+    FIREBASE_TIMESTAMP,
+    FIREBASE_BLOB,
+    FIREBASE_GEO_POINT,
+    FIREBASE_DOCUMENT_REFERENCE,
+    MAP,
+    MAP.parameterizedBy(STRING, ANY),
+    MAP.parameterizedBy(STRING, ANY.copy(nullable = true)),
+    MAP.parameterizedBy(ANY, ANY),
+    MAP.parameterizedBy(ANY, ANY.copy(nullable = true)),
+    LIST,
+    LIST.parameterizedBy(ANY) -> CodeBlock.of("(get(%S) as %T)", name, type)
+    else -> throw IllegalArgumentException("Unsupported type $type")
 }
-
-private fun getBaseInitializer(name: String, type: TypeName): CodeBlock =
-    when (type.copy(nullable = false)) {
-        BOOLEAN,
-        STRING,
-        LONG,
-        DOUBLE,
-        FIREBASE_TIMESTAMP,
-        FIREBASE_BLOB,
-        FIREBASE_GEO_POINT,
-        FIREBASE_DOCUMENT_REFERENCE,
-        MAP,
-        MAP.parameterizedBy(STRING, ANY),
-        MAP.parameterizedBy(STRING, ANY.copy(nullable = true)),
-        MAP.parameterizedBy(ANY, ANY),
-        MAP.parameterizedBy(ANY, ANY.copy(nullable = true)),
-        LIST,
-        LIST.parameterizedBy(ANY) -> CodeBlock.of("(get(%S) as %T)", name, type)
-        else -> throw IllegalArgumentException("Unsupported type $type")
-    }
