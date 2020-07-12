@@ -10,38 +10,49 @@ internal fun generateFunTargetMap(target: TargetClass) = FunSpec
     .addKdoc("Converts %T to %T.", target.type, MAP.parameterizedBy(STRING, ANY))
     .receiver(target.type)
     .returns(MAP.parameterizedBy(STRING, ANY.copy(nullable = true)))
-//    .beginControlFlow("return HashMap<%T, %T>(%L).apply", STRING, ANY, target.params.size) // TODO take care of embedded
-    .beginControlFlow("return mutableMapOf<%T, %T>().apply", STRING, ANY.copy(nullable = true))
-    .apply {
-        val params = target.params
-        val documentedIdParams = target.documentIdParams
-        val propertyParams = (params - documentedIdParams)
-
-        propertyParams.forEach { param ->
-            addCode(putter(param))
-        }
-    }
-    .endControlFlow()
+    .body(target)
     .build()
 
 @KotlinPoetMetadataPreview
-private fun putter(param: TargetParameter): CodeBlock {
-    return CodeBlock.builder()
-        .add("%L", getter(param))
-        .call(param.type)
-        .beginControlFlow("let")
-        .putParam(param)
-        .endControlFlow()
-        .apply {
-            // FIXME inline and eliminate two check for null
-            if (param.serverTimestamp && param.type.isNullable) {
-                beginControlFlow("if (%L == null)", param.name)
-                addStatement("put(%S, %T.serverTimestamp())", param.propertyName, FIREBASE_FIELD_VALUE)
-                endControlFlow()
-            }
-        }
-        .build()
+private fun FunSpec.Builder.body(target: TargetClass) = apply {
+    val params = target.params
+    val documentedIdParams = target.documentIdParams
+    val propertyParams = (params - documentedIdParams)
+
+    if (propertyParams.isEmpty()) {
+        addCode("return emptyMap()")
+    } else {
+        beginControlFlow("return mutableMapOf<%T, %T>().apply", STRING, ANY.copy(nullable = true))
+        putParams(propertyParams)
+        endControlFlow()
+    }
 }
+
+@KotlinPoetMetadataPreview
+private fun FunSpec.Builder.putParams(params: List<TargetParameter>) = apply {
+    params.forEach { param ->
+        addCode(putter(param))
+    }
+}
+
+@KotlinPoetMetadataPreview
+private fun putter(param: TargetParameter): CodeBlock = CodeBlock.builder()
+    .add("\n// %L\n", param.name)
+    .add("%L", getter(param))
+    .call(param.type)
+    .beginControlFlow("also")
+    .putParam(param)
+    .endControlFlow()
+    .apply {
+        if (param.serverTimestamp && param.type.isNullable) {
+            addStatement(
+                "?: put(%S, %T.serverTimestamp())",
+                param.propertyName,
+                FIREBASE_FIELD_VALUE
+            )
+        }
+    }
+    .build()
 
 @KotlinPoetMetadataPreview
 private fun CodeBlock.Builder.putParam(param: TargetParameter): CodeBlock.Builder =

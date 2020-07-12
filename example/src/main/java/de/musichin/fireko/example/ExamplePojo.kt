@@ -32,7 +32,15 @@ ExamplePojo(
     @Embedded val embeddedPojoWithDocId: EmbeddedPojoWithDocId,
     val point: GeoPoint,
     val anotherPojo: AnotherPojo
-)
+) {
+    fun test(): Map<Any, Any> {
+        val map = mutableMapOf<Any, Any>()
+        number?.toDouble()
+            ?.also { map.put("number", it) }
+            ?: map.put("numer", FieldValue.serverTimestamp())
+        return map
+    }
+}
 
 @Fireko
 data class AnotherPojo(
