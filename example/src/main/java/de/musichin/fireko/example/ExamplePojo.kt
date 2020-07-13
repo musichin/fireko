@@ -1,6 +1,5 @@
 package de.musichin.fireko.example
 
-import com.google.firebase.Timestamp
 import com.google.firebase.firestore.*
 import de.musichin.fireko.annotations.Embedded
 import de.musichin.fireko.annotations.Fireko
@@ -8,8 +7,7 @@ import java.time.Instant
 import java.util.*
 
 @Fireko
-data class
-ExamplePojo(
+data class ExamplePojo(
     val firebaseGeoPoint: GeoPoint,
     @DocumentId val id: String,
     @DocumentId val idAsLong: Long,
@@ -28,19 +26,11 @@ ExamplePojo(
     @Exclude val ignore: String? = null,
     val simpleEnum: SimpleEnum,
     val complexEnum: ComplexEnum,
-    @Embedded val embeddedPojo: EmbeddedPojo,
+    @Embedded val embeddedPojo: EmbeddedPojo?,
     @Embedded val embeddedPojoWithDocId: EmbeddedPojoWithDocId,
     val point: GeoPoint,
     val anotherPojo: AnotherPojo
-) {
-    fun test(): Map<Any, Any> {
-        val map = mutableMapOf<Any, Any>()
-        number?.toDouble()
-            ?.also { map.put("number", it) }
-            ?: map.put("numer", FieldValue.serverTimestamp())
-        return map
-    }
-}
+)
 
 @Fireko
 data class AnotherPojo(
@@ -49,7 +39,8 @@ data class AnotherPojo(
 
 @Fireko
 data class EmbeddedPojo(
-    val a: String
+    val a: String,
+    val b: Int
 )
 
 @Fireko
@@ -68,3 +59,26 @@ enum class ComplexEnum {
     X,
     Y
 }
+
+
+data class User(val name: String, @Embedded val location: Location)
+
+data class Location(val lat: Double?, val lng: Double?, val address: String?)
+
+/**
+ {
+   name: "adf",
+    address: "sdf"
+ }
+ -> with location
+
+ {
+ name: "adf"
+ }
+ -> no location / or crash
+
+ {
+ name: "adf"
+ }
+
+ */

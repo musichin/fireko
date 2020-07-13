@@ -42,5 +42,5 @@ dependencies {
     implementation project(':annotations')
     kapt project(':processor')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'com.google.firebase:firebase-firestore:21.4.3'
+    implementation 'com.google.firebase:firebase-firestore:21.5.0'
 }

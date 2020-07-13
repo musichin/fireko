@@ -24,3 +24,13 @@ allprojects {
 task clean (type: Delete) {
     delete rootProject.buildDir
 }
+
+version = System.getenv("VERSION") ?: 'snapshot'
+group = 'de.musichin.fireko'
+description = 'Forestore Kotlin Data Convertor'
+
+ext {
+    userOrg = 'musichin'
+    website = 'https://github.com/musichin/fireko'
+    licences = ['MIT']
+}
