@@ -1,2 +1,2 @@
-include 'annotations', 'processor'
+include 'fireko', 'fireko-codegen'
 include ':example'

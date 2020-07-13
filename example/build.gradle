@@ -39,8 +39,8 @@ android {
 }
 
 dependencies {
-    implementation project(':annotations')
-    kapt project(':processor')
+    implementation project(':fireko')
+    kapt project(':fireko-codegen')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'com.google.firebase:firebase-firestore:21.5.0'
 }
