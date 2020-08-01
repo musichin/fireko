@@ -1,20 +1,21 @@
 package de.musichin.fireko.processor
 
-import com.squareup.kotlinpoet.ANY
+import com.squareup.kotlinpoet.ANY as LANG_ANY
 import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 import com.squareup.kotlinpoet.BOOLEAN as LANG_BOOLEAN
 import com.squareup.kotlinpoet.DOUBLE as LANG_DOUBLE
-import com.squareup.kotlinpoet.LIST as UTIL_LIST
+import com.squareup.kotlinpoet.LIST as LANG_LIST
 import com.squareup.kotlinpoet.LONG as LANG_LONG
-import com.squareup.kotlinpoet.MAP as UTIL_MAP
+import com.squareup.kotlinpoet.MAP as LANG_MAP
 import com.squareup.kotlinpoet.NUMBER as LANG_NUMBER
 import com.squareup.kotlinpoet.STRING as LANG_STRING
 
 internal enum class ValueType {
     //    NULL,
+    ANY,
     BOOLEAN,
     INTEGER,
     DOUBLE,
@@ -30,6 +31,7 @@ internal enum class ValueType {
     companion object {
         @KotlinPoetMetadataPreview
         fun valueOf(context: Context, type: TypeName): ValueType = when {
+            type.isAny() -> ANY
             type.isCharSequence() -> STRING
             type.isOneOf(LANG_NUMBER) -> DOUBLE
             type.isFloating() -> DOUBLE
@@ -52,11 +54,12 @@ internal enum class ValueType {
 
         @KotlinPoetMetadataPreview
         fun typeOf(context: Context, type: TypeName): TypeName {
-            if (type.isOneOf(ANY)) return type
-
-            if (context.isPojo(type)) return UTIL_MAP.parameterizedBy(LANG_STRING, ANY.nullable())
+            if (context.isPojo(type)) {
+                return LANG_MAP.parameterizedBy(LANG_STRING, LANG_ANY.nullable())
+            }
 
             val result = when (valueOf(context, type)) {
+                ANY -> LANG_ANY
                 BOOLEAN -> LANG_BOOLEAN
                 INTEGER -> LANG_LONG
                 DOUBLE -> LANG_DOUBLE
@@ -69,13 +72,13 @@ internal enum class ValueType {
                     type as ParameterizedTypeName
                     val argType = type.typeArguments[0]
 
-                    UTIL_LIST.parameterizedBy(typeOf(context, argType))
+                    LANG_LIST.parameterizedBy(typeOf(context, argType))
                 }
                 MAP -> {
                     type as ParameterizedTypeName
                     val valueType = type.typeArguments[1]
 
-                    UTIL_MAP.parameterizedBy(
+                    LANG_MAP.parameterizedBy(
                         LANG_STRING,
                         typeOf(context, valueType)
                     )

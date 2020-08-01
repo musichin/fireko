@@ -23,6 +23,9 @@ fun TypeName.isOneOf(vararg typeNames: TypeName): Boolean {
     return typeNames.any { typeName -> thisNotNullable == typeName.notNullable() }
 }
 
+fun TypeName.isAny(): Boolean =
+    isOneOf(ANY)
+
 fun TypeName.isNumber(): Boolean =
     isOneOf(NUMBER, CHAR, BYTE, SHORT, INT, LONG, FLOAT, DOUBLE)
 

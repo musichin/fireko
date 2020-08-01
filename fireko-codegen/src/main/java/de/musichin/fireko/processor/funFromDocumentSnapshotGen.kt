@@ -25,10 +25,11 @@ internal fun genFunDocumentSnapshotToObject(context: Context, target: TargetClas
     .build()
 
 @KotlinPoetMetadataPreview
-private fun generateLocalProperty(context: Context, param: TargetParameter): PropertySpec = PropertySpec
-    .builder(param.name, param.type)
-    .initializer(generateInitializer(context, param))
-    .build()
+private fun generateLocalProperty(context: Context, param: TargetParameter): PropertySpec =
+    PropertySpec
+        .builder(param.name, param.type)
+        .initializer(generateInitializer(context, param))
+        .build()
 
 @KotlinPoetMetadataPreview
 private fun generateInitializer(context: Context, param: TargetParameter): CodeBlock {
@@ -56,6 +57,7 @@ private fun generateInitializer(context: Context, param: TargetParameter): CodeB
 @KotlinPoetMetadataPreview
 private fun getBaseInitializer(context: Context, name: String, type: TypeName) =
     when (ValueType.valueOf(context, type)) {
+        ValueType.ANY -> CodeBlock.of("get(%S)", name)
         ValueType.BOOLEAN -> CodeBlock.of("getBoolean(%S)", name)
         ValueType.INTEGER -> CodeBlock.of("getLong(%S)", name)
         ValueType.DOUBLE -> CodeBlock.of("getDouble(%S)", name)

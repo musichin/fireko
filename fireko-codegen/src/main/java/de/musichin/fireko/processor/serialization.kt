@@ -27,7 +27,7 @@ internal fun CodeBlock.Builder.deserialize(
 
             // TODO optimizations
             val parametrizedType = type.typeArguments.first()
-            if (!parametrizedType.isOneOf(ANY)) {
+            if (!parametrizedType.isAny()) {
                 call(type)
                 add("map { it")
                 deserialize(context, parametrizedType, false)
@@ -106,7 +106,7 @@ internal fun CodeBlock.Builder.serialize(
 
             // TODO optimizations
             val parametrizedType = type.typeArguments.first()
-            if (!parametrizedType.isOneOf(ANY)) {
+            if (!parametrizedType.isAny()) {
                 call(type)
                 add("map { it")
                 serialize(context, parametrizedType.notNullable())

@@ -70,7 +70,7 @@ internal fun CodeBlock.Builder.convert(
         convert(source.notNullable(), target)
     }
 
-    target.isOneOf(ANY) -> this
+    target.isAny() -> this
 
     source.isFirebaseTimestamp() && target.isUtilDate() -> {
         call(source)

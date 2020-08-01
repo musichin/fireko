@@ -8,6 +8,7 @@ import java.util.*
 
 @Fireko
 data class ExamplePojo(
+    val any: Any,
     val firebaseGeoPoint: GeoPoint,
     @DocumentId val id: String,
     @DocumentId val idAsLong: Long,
