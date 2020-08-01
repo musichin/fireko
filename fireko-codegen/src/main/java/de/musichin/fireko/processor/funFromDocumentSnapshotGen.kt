@@ -1,19 +1,21 @@
 package de.musichin.fireko.processor
 
 import com.squareup.kotlinpoet.*
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 
 @KotlinPoetMetadataPreview
-internal fun generateFunReceiverDocumentSnapshot(target: TargetClass) = FunSpec
+internal fun genFunDocumentSnapshotToObject(context: Context, target: TargetClass) = FunSpec
     .builder(toType(target.type))
     .addKdoc("Converts %T to %T.", FIREBASE_DOCUMENT_SNAPSHOT, target.type)
     .receiver(FIREBASE_DOCUMENT_SNAPSHOT)
-    .returns(target.type)
+    .returns(target.type.nullable())
+    .beginControlFlow("if (!exists())")
+    .addStatement("return null")
+    .endControlFlow()
     .apply {
         val params = target.params
         params.forEach { parameter ->
-            addCode("%L", generateLocalProperty(parameter))
+            addCode("%L", generateLocalProperty(context, parameter))
         }
 
         val paramNames = params.map { it.name }.joinToString(", ") { "$it = $it" }
@@ -22,12 +24,14 @@ internal fun generateFunReceiverDocumentSnapshot(target: TargetClass) = FunSpec
     }
     .build()
 
-private fun generateLocalProperty(param: TargetParameter): PropertySpec = PropertySpec
+@KotlinPoetMetadataPreview
+private fun generateLocalProperty(context: Context, param: TargetParameter): PropertySpec = PropertySpec
     .builder(param.name, param.type)
-    .initializer(generateInitializer(param))
+    .initializer(generateInitializer(context, param))
     .build()
 
-private fun generateInitializer(param: TargetParameter): CodeBlock {
+@KotlinPoetMetadataPreview
+private fun generateInitializer(context: Context, param: TargetParameter): CodeBlock {
     val name = param.propertyName
     val type = param.type
 
@@ -36,33 +40,32 @@ private fun generateInitializer(param: TargetParameter): CodeBlock {
     }
 
     if (param.embedded) {
-        return CodeBlock.of("this%L", param.convertFrom(FIREBASE_DOCUMENT_SNAPSHOT))
+        type as ClassName
+        return CodeBlock.builder()
+            .add("this%L", invokeToType(type.notNullable()))
+            .convert(type.nullable(), type)
+            .build()
     }
 
-    val source = param.selectSource(FIREBASE_SUPPORTED_TYPES)
     return CodeBlock.builder()
-        .add(getBaseInitializer(name, source))
-        .add(param.convertFrom(source))
+        .add(getBaseInitializer(context, name, param.type))
+        .deserialize(context, param.type, true)
         .build()
 }
 
-private fun getBaseInitializer(name: String, type: TypeName) = when (type.copy(nullable = false)) {
-    BOOLEAN,
-    STRING,
-    LONG,
-    DOUBLE,
-    FIREBASE_TIMESTAMP,
-    FIREBASE_BLOB,
-    FIREBASE_GEO_POINT,
-    FIREBASE_DOCUMENT_REFERENCE,
-    UTIL_DATE ->
-        CodeBlock.of("get%L(%S)", (type as ClassName).simpleName, name)
-    MAP,
-    MAP.parameterizedBy(STRING, ANY),
-    MAP.parameterizedBy(STRING, ANY),
-    MAP.parameterizedBy(STRING, ANY.copy(nullable = false)),
-    MAP.parameterizedBy(ANY, ANY),
-    MAP.parameterizedBy(ANY, ANY.copy(nullable = true)) ->
-        CodeBlock.of("(get(%S) as %T)", name, type)
-    else -> throw IllegalArgumentException("Type $type is unsupported.")
-}
+@KotlinPoetMetadataPreview
+private fun getBaseInitializer(context: Context, name: String, type: TypeName) =
+    when (ValueType.valueOf(context, type)) {
+        ValueType.BOOLEAN -> CodeBlock.of("getBoolean(%S)", name)
+        ValueType.INTEGER -> CodeBlock.of("getLong(%S)", name)
+        ValueType.DOUBLE -> CodeBlock.of("getDouble(%S)", name)
+        ValueType.STRING -> CodeBlock.of("getString(%S)", name)
+        ValueType.BYTES -> CodeBlock.of("getBlob(%S)", name)
+        ValueType.GEO_POINT -> CodeBlock.of("getGeoPoint(%S)", name)
+        ValueType.REFERENCE -> CodeBlock.of("getDocumentReference(%S)", name)
+        ValueType.TIMESTAMP -> CodeBlock.of("getTimestamp(%S)", name)
+        ValueType.MAP,
+        ValueType.ARRAY ->
+            CodeBlock.of("(get(%S) as %T)", name, ValueType.typeOf(context, type).nullable())
+    }
+

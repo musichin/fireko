@@ -1,12 +1,14 @@
 package de.musichin.fireko.processor
 
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 import com.squareup.kotlinpoet.metadata.specs.ClassInspector
 import com.squareup.kotlinpoet.metadata.specs.internal.ClassInspectorUtil
 import com.squareup.kotlinpoet.metadata.specs.toTypeSpec
 import com.squareup.kotlinpoet.metadata.toImmutableKmClass
+import de.musichin.fireko.annotations.Fireko
 import javax.lang.model.element.Element
 import javax.lang.model.util.Elements
 
@@ -29,6 +31,19 @@ internal class Context(
         return targetClasses.getOrPut(targetElement) {
             TargetClass.create(this, targetElement)
         }
+    }
+
+    fun isEnum(type: TypeName): Boolean {
+        if (type !is ClassName) return false
+        val targetClass = targetClass(type) ?: return false
+        return targetClass.typeSpec.isEnum
+    }
+
+    fun isPojo(type: TypeName): Boolean {
+        if (type !is ClassName) return false
+
+        val targetElement = targetElement(type)?: return false
+        return targetElement.element.getAnnotation(Fireko::class.java) != null
     }
 
     fun targetClass(element: TargetElement): TargetClass? {

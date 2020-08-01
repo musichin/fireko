@@ -1,11 +1,14 @@
 package de.musichin.fireko.processor
 
-import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.ParameterSpec
+import com.squareup.kotlinpoet.STRING
+import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 
 @KotlinPoetMetadataPreview
 internal class TargetClass private constructor(
-    private val context: Context,
+    private val allDocumentIds: List<TargetParameter>,
     val typeSpec: TypeSpec,
     val type: ClassName,
     val allParams: List<TargetParameter>
@@ -19,18 +22,6 @@ internal class TargetClass private constructor(
     val excludeParams = allParams.filter { it.exclude }
 
     val documentIdParams = params.filter { it.documentId }
-
-    private val allDocumentIds: List<TargetParameter> by lazy {
-        params.flatMap { param ->
-            when {
-                param.documentId -> listOf(param)
-                param is TargetClassTargetParameter -> {
-                    context.targetClass(param.parameterSpec.type as ClassName)!!.allDocumentIds
-                }
-                else -> emptyList()
-            }
-        }
-    }
 
     private val preferredDocumentId = allDocumentIds.find {
         it.type.copy(nullable = false) == STRING
@@ -62,10 +53,23 @@ internal class TargetClass private constructor(
                 ?: throw IllegalArgumentException("${element.className} has no default constructor")
 
             val params = constructor.parameters.map { parameter ->
-                TargetParameter.create(context, element, parameter)
+                TargetParameter.create(element, parameter)
             }
 
-            return TargetClass(context, element.typeSpec, element.className, params)
+            val allDocumentIds: List<TargetParameter> = documentIds(context, params)
+
+            return TargetClass(allDocumentIds, element.typeSpec, element.className, params)
         }
+
+        private fun documentIds(context: Context, params: List<TargetParameter>) =
+            params.flatMap { param ->
+                when {
+                    param.documentId -> listOf(param)
+                    else -> (param.type as? ClassName)
+                        ?.let { context.targetClass(it) }
+                        ?.allDocumentIds
+                        .orEmpty()
+                }
+            }
     }
 }

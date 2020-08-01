@@ -5,7 +5,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 
 @KotlinPoetMetadataPreview
-internal fun generateFunReceiverMap(target: TargetClass) = FunSpec
+internal fun genFunMapToObject(context: Context, target: TargetClass) = FunSpec
     .builder(toType(target.type))
     .addKdoc(
         "Converts %T obtained from %T from to %T.",
@@ -32,15 +32,16 @@ internal fun generateFunReceiverMap(target: TargetClass) = FunSpec
             val remainingParams = documentIdParams - listOfNotNull(coveredIdParam)
 
             remainingParams.forEach { param ->
+                val initializer = CodeBlock.builder().convert(docIdParam.type, param.type).build()
                 val propertySpec = PropertySpec.builder(param.name, param.type)
-                    .initializer("%L%L", docIdParam.name, param.convertFrom(docIdParam.type))
+                    .initializer("%L%L", docIdParam.name, initializer)
                     .build()
                 addCode("%L", propertySpec)
             }
         }
 
         localParams.forEach { parameter ->
-            addCode("%L", generateLocalProperty(parameter))
+            addCode("%L", generateLocalProperty(context, target, parameter))
         }
 
         val paramNames = params.map { it.name }.joinToString(", ") { "$it = $it" }
@@ -49,47 +50,50 @@ internal fun generateFunReceiverMap(target: TargetClass) = FunSpec
     }
     .build()
 
-private fun generateLocalProperty(param: TargetParameter): PropertySpec = PropertySpec
-    .builder(param.name, param.type)
-    .initializer(generateInitializer(param))
-    .build()
+@KotlinPoetMetadataPreview
+private fun generateLocalProperty(context: Context, target: TargetClass, param: TargetParameter): PropertySpec =
+    PropertySpec
+        .builder(param.name, param.type)
+        .initializer(generateInitializer(context, target, param))
+        .build()
 
-private fun generateInitializer(param: TargetParameter): CodeBlock {
+@KotlinPoetMetadataPreview
+private fun generateInitializer(
+    context: Context,
+    target: TargetClass,
+    param: TargetParameter
+): CodeBlock {
+    val type = param.type
     val name = param.propertyName
 
     if (param.documentId) {
-        return CodeBlock.of("TODO()")
+        throw IllegalArgumentException("${param.name} is not allowed to be DocumentId")
     }
 
     if (param.embedded) {
-        return CodeBlock.of(
-            "this%L",
-            param.convertFrom(MAP.parameterizedBy(STRING, ANY.copy(nullable = true)))
-        )
+        type as ClassName
+        // id needed?
+        val paramTargetClass = context.targetClass(type)
+        val paramNames = if (paramTargetClass?.needsDocumentId == true) {
+            val paramName = target.documentIdParamSpec?.name
+            listOfNotNull(paramName)
+        } else {
+            emptyList()
+        }
+        return CodeBlock.builder()
+            .add("this%L", invokeToType(type.notNullable(), *paramNames.toTypedArray()))
+            .build()
     }
 
-    val source = param.selectSource(FIREBASE_SUPPORTED_TYPES).nullable
     return CodeBlock.builder()
-        .add(getBaseInitializer(name, source))
-        .add(param.convertFrom(source))
+        .add(getBaseInitializer(context, name, param.type))
+        .deserialize(context, param.type, param.type.isNullable)
         .build()
 }
 
-private fun getBaseInitializer(name: String, type: TypeName): CodeBlock = when (type.notNullable) {
-    BOOLEAN,
-    STRING,
-    LONG,
-    DOUBLE,
-    FIREBASE_TIMESTAMP,
-    FIREBASE_BLOB,
-    FIREBASE_GEO_POINT,
-    FIREBASE_DOCUMENT_REFERENCE,
-    MAP,
-    MAP.parameterizedBy(STRING, ANY),
-    MAP.parameterizedBy(STRING, ANY.copy(nullable = true)),
-    MAP.parameterizedBy(ANY, ANY),
-    MAP.parameterizedBy(ANY, ANY.copy(nullable = true)),
-    LIST,
-    LIST.parameterizedBy(ANY) -> CodeBlock.of("(get(%S) as %T)", name, type)
-    else -> throw IllegalArgumentException("Unsupported type $type")
+@KotlinPoetMetadataPreview
+private fun getBaseInitializer(context: Context, name: String, type: TypeName): CodeBlock {
+    val source = ValueType.typeOf(context, type)
+
+    return CodeBlock.of("(get(%S) as %T)", name, source.copy(nullable = type.isNullable))
 }

@@ -2,7 +2,7 @@ package de.musichin.fireko.processor
 
 import com.squareup.kotlinpoet.*
 
-private fun sources(target: TypeName): List<TypeName> = when (target.notNullable) {
+private fun sources(target: TypeName): List<TypeName> = when (target.notNullable()) {
     FIREBASE_TIMESTAMP,
     UTIL_DATE,
     TIME_INSTANT,
@@ -19,14 +19,14 @@ private fun sources(target: TypeName): List<TypeName> = when (target.notNullable
     else -> listOf(target)
 }
 
-internal fun select(sources: Collection<TypeName>, target: TypeName): TypeName {
-    val sourcesNotNullable = sources.map { it.notNullable }
-    val typeNotNullable = target.notNullable
+private fun select(sources: Collection<TypeName>, target: TypeName): TypeName {
+    val sourcesNotNullable = sources.map { it.notNullable() }
+    val typeNotNullable = target.notNullable()
 
     if (target in sources) {
         return target
     }
-    val directSelect = sources.find { it.notNullable == typeNotNullable }
+    val directSelect = sources.find { it.notNullable() == typeNotNullable }
     if (directSelect != null) {
         return directSelect
     }
@@ -37,13 +37,13 @@ internal fun select(sources: Collection<TypeName>, target: TypeName): TypeName {
         return select
     }
 
-    return select.nullable
+    return select.nullable()
 }
 
-internal fun select(source: TypeName, targets: Collection<TypeName>): TypeName =
+private fun select(source: TypeName, targets: Collection<TypeName>): TypeName =
     select(targets, source)
 
-internal fun CodeBlock.Builder.convert(
+private fun CodeBlock.Builder.convert(
     sources: List<TypeName>,
     target: TypeName
 ): CodeBlock.Builder {
@@ -51,7 +51,7 @@ internal fun CodeBlock.Builder.convert(
     return convert(source, target)
 }
 
-internal fun CodeBlock.Builder.convert(
+private fun CodeBlock.Builder.convert(
     source: TypeName,
     targets: List<TypeName>
 ): CodeBlock.Builder {
@@ -67,8 +67,10 @@ internal fun CodeBlock.Builder.convert(
 
     source.isNullable && !target.isNullable -> {
         add(".let(::requireNotNull)")
-        convert(source.notNullable, target)
+        convert(source.notNullable(), target)
     }
+
+    target.isOneOf(ANY) -> this
 
     source.isFirebaseTimestamp() && target.isUtilDate() -> {
         call(source)
@@ -77,24 +79,19 @@ internal fun CodeBlock.Builder.convert(
 
     source.isFirebaseTimestamp() && target.isInstant() -> {
         call(source)
-        beginControlFlow("let")
-        addStatement(
-            "%T.ofEpochSecond(it.seconds, it.nanoseconds.toLong())",
-            target.notNullable
-        )
-        endControlFlow()
+        add("let { %T.ofEpochSecond(it.seconds, it.nanoseconds.toLong()) }", target.notNullable())
     }
 
     source.isNumber() && target.isNumber() ->
         convertNumber(source, target)
 
+    source.isString() && target.isCharSequence() ->
+        this
+
     source.isCharSequence() && target.isString() -> {
         call(source)
         add("toString()")
     }
-
-    source.isString() && target.isCharSequence() ->
-        this
 
     source.isString() && target.isNumber() ->
         convertNumber(source, target)
@@ -104,9 +101,7 @@ internal fun CodeBlock.Builder.convert(
 
     source.isInstant() && target.isFirebaseTimestamp() -> {
         call(source)
-        beginControlFlow("let")
-        addStatement("%T(it.epochSecond, it.nano)", FIREBASE_TIMESTAMP)
-        endControlFlow()
+        add("let { %T(it.epochSecond, it.nano) }", FIREBASE_TIMESTAMP)
     }
 
     else -> throwConversionError(source, target)
@@ -137,26 +132,3 @@ private fun CodeBlock.Builder.convertNumber(source: TypeName, target: TypeName):
 
     throwConversionError(source, target)
 }
-
-private fun TypeName.isOneOf(vararg typeNames: TypeName): Boolean {
-    val thisNotNullable = this.notNullable
-    return typeNames.any { typeName -> thisNotNullable == typeName.notNullable }
-}
-
-private fun TypeName.isNumber(): Boolean =
-    isOneOf(NUMBER, CHAR, BYTE, SHORT, INT, LONG, FLOAT, DOUBLE)
-
-private fun TypeName.isInstant(): Boolean =
-    isOneOf(TIME_INSTANT, BP_INSTANT)
-
-private fun TypeName.isFirebaseTimestamp(): Boolean =
-    isOneOf(FIREBASE_TIMESTAMP)
-
-private fun TypeName.isUtilDate(): Boolean =
-    isOneOf(UTIL_DATE)
-
-private fun TypeName.isString(): Boolean =
-    isOneOf(STRING)
-
-private fun TypeName.isCharSequence(): Boolean =
-    isOneOf(CHAR_SEQUENCE)

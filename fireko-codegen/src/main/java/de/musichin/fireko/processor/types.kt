@@ -34,20 +34,3 @@ internal val BP_INSTANT =
 
 internal val EMBEDDED =
     ClassName(Embedded::class.java.`package`.name, Embedded::class.java.simpleName)
-
-
-internal val FIREBASE_SUPPORTED_TYPES = listOf(
-    FIREBASE_DOCUMENT_REFERENCE.copy(nullable = true),
-    FIREBASE_TIMESTAMP.copy(nullable = true),
-    FIREBASE_GEO_POINT.copy(nullable = true),
-    FIREBASE_BLOB.copy(nullable = true),
-    BOOLEAN.copy(nullable = true),
-    DOUBLE.copy(nullable = true),
-    LONG.copy(nullable = true),
-    STRING.copy(nullable = true),
-    MAP.parameterizedBy(STRING, ANY).copy(nullable = true),
-    MAP.parameterizedBy(STRING, ANY.copy(nullable = true)).copy(nullable = true),
-    MAP.parameterizedBy(ANY, ANY).copy(nullable = true),
-    MAP.parameterizedBy(ANY, ANY.copy(nullable = true)).copy(nullable = true),
-    MAP.copy(nullable = true)
-)

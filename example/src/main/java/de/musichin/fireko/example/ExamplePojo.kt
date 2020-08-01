@@ -25,11 +25,21 @@ data class ExamplePojo(
     val charSequence: CharSequence,
     @Exclude val ignore: String? = null,
     val simpleEnum: SimpleEnum,
+    val simpleEnumOpt: SimpleEnum?,
     val complexEnum: ComplexEnum,
+    val point: GeoPoint,
     @Embedded val embeddedPojo: EmbeddedPojo?,
     @Embedded val embeddedPojoWithDocId: EmbeddedPojoWithDocId,
-    val point: GeoPoint,
-    val anotherPojo: AnotherPojo
+    val anotherPojo: AnotherPojo,
+    val listAny: List<Any>,
+    val listAnyOpt: List<Any?>,
+    val listStringOpt: List<String?>,
+    val listInt: List<Int>,
+    val listIntOpt: List<Int>?,
+    val listListString: List<List<String>>,
+    val mapStringString: Map<String, String>,
+    val mapStringInt: Map<String, Int>,
+    val mapIntInt: Map<Int, Int>
 )
 
 @Fireko
@@ -55,30 +65,7 @@ enum class SimpleEnum {
 }
 
 enum class ComplexEnum {
-    @PropertyName("sdf")
+    @PropertyName("x")
     X,
     Y
 }
-
-
-data class User(val name: String, @Embedded val location: Location)
-
-data class Location(val lat: Double?, val lng: Double?, val address: String?)
-
-/**
- {
-   name: "adf",
-    address: "sdf"
- }
- -> with location
-
- {
- name: "adf"
- }
- -> no location / or crash
-
- {
- name: "adf"
- }
-
- */
