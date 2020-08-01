@@ -25,9 +25,8 @@ internal fun CodeBlock.Builder.deserialize(
 
             convert(type.copy(nullable = nullable), type)
 
-            // TODO optimizations
             val parametrizedType = type.typeArguments.first()
-            if (!parametrizedType.isAny()) {
+            if (peek { deserialize(context, parametrizedType, false) }.isNotEmpty()) {
                 call(type)
                 add("map { it")
                 deserialize(context, parametrizedType, false)
@@ -47,7 +46,6 @@ internal fun CodeBlock.Builder.deserialize(
                 val keyType = type.typeArguments[0]
                 val valueType = type.typeArguments[1]
 
-                // TODO optimizations
                 if (!keyType.isString()) {
                     call(type)
                     add("mapKeys { (key, _) -> key")
@@ -55,10 +53,12 @@ internal fun CodeBlock.Builder.deserialize(
                     add(" }")
                 }
 
-                call(type)
-                add("mapValues { (_, value) -> value")
-                deserialize(context, valueType, false)
-                add(" }")
+                if (peek { deserialize(context, valueType, false) }.isNotEmpty()) {
+                    call(type)
+                    add("mapValues { (_, value) -> value")
+                    deserialize(context, valueType, false)
+                    add(" }")
+                }
             }
         }
         else -> convert(ValueType.typeOf(context, type).copy(nullable = nullable), type)
@@ -104,9 +104,8 @@ internal fun CodeBlock.Builder.serialize(
         ValueType.ARRAY -> {
             type as ParameterizedTypeName
 
-            // TODO optimizations
             val parametrizedType = type.typeArguments.first()
-            if (!parametrizedType.isAny()) {
+            if (peek { serialize(context, parametrizedType.notNullable()) }.isNotEmpty()) {
                 call(type)
                 add("map { it")
                 serialize(context, parametrizedType.notNullable())
@@ -125,7 +124,6 @@ internal fun CodeBlock.Builder.serialize(
                 val keyType = type.typeArguments[0]
                 val valueType = type.typeArguments[1]
 
-                // TODO optimizations
                 if (!keyType.isString()) {
                     call(type)
                     add("mapKeys { (key, _) -> key")
@@ -133,10 +131,12 @@ internal fun CodeBlock.Builder.serialize(
                     add(" }")
                 }
 
-                call(type)
-                add("mapValues { (_, value) -> value")
-                serialize(context, valueType.notNullable())
-                add(" }")
+                if (peek { serialize(context, valueType.notNullable()) }.isNotEmpty()) {
+                    call(type)
+                    add("mapValues { (_, value) -> value")
+                    serialize(context, valueType.notNullable())
+                    add(" }")
+                }
             }
         }
         else -> convert(type, ValueType.typeOf(context, type).copy(nullable = type.isNullable))
@@ -170,4 +170,8 @@ private fun enumPropertyNames(typeSpec: TypeSpec): Map<String, String> {
     return typeSpec.enumConstants
         .mapNotNull { (name, spec) -> spec.annotationSpecs.propertyName()?.let { name to it } }
         .toMap()
+}
+
+private fun peek(block: CodeBlock.Builder.() -> CodeBlock.Builder): CodeBlock {
+    return CodeBlock.builder().block().build()
 }

@@ -38,7 +38,11 @@ private fun FunSpec.Builder.putParams(context: Context, params: List<TargetParam
 @KotlinPoetMetadataPreview
 private fun putter(context: Context, param: TargetParameter): CodeBlock =
     if (param.embedded) {
-        CodeBlock.of("putAll(%L ?: emptyMap())\n", serialize(context, param))
+        if (param.type.isNullable) {
+            CodeBlock.of("putAll(%L.orEmpty())\n", serialize(context, param))
+        } else {
+            CodeBlock.of("putAll(%L)\n", serialize(context, param))
+        }
     } else {
         CodeBlock.of("put(%S, %L)\n", param.name, serialize(context, param))
     }
