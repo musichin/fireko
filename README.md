@@ -1,5 +1,54 @@
 # Firestore Kotlin Data Convertor [ ![Download](https://api.bintray.com/packages/musichin/maven/fireko/images/download.svg)](https://bintray.com/musichin/maven/fireko/_latestVersion) [![Kotlin](https://img.shields.io/badge/Kotlin-1.3.72-blue.svg)](http://kotlinlang.org) ![CI](https://github.com/musichin/fireko/workflows/CI/badge.svg)
 
+Fireko does generate functions to convert `DocumentSnapshot` to your (data) classes. What you have to do is to annotate it with `Fireko` and the rest is done automatically.
+
+Advantages over using [DocumentSnapshot::toObject](https://firebase.google.com/docs/reference/android/com/google/firebase/firestore/DocumentSnapshot#toObject(java.lang.Class%3CT%3E)):
+* Empty constructor is not required
+* No reflections
+* More types
+
+## Usage
+```kotlin
+data class User(
+    @DocumentId val id: String,
+    val firstName: String, 
+    val lastName: String,
+    @ServerTimestamp val createdAt: Instant? = null,
+    @Embedded val address: Address,
+)
+
+@Fireko
+data class Address(
+    val street: String,
+    val city: String,
+    @PropertyName("zip_code") val zipCode: String,
+    val country: String,
+)
+
+// query user
+FirebaseFirestore.getInstance()
+    .collection("users")
+    .document("user1")
+    .addSnapshotListener { snapshot, _ ->
+        val user = snapshot?.toUser() // toUser is generated
+        // ...
+    }
+
+// store user
+FirebaseFirestore.getInstance()
+    .collection("users")
+    .document("user1")
+    .set(user.toMap()) // toMap is generated
+    .addOnCompleteListener { 
+        // ...
+    }
+```
+
+## Additonally supported types:
+* Instant
+* Uri (wip)
+* URL (wip)
+
 ## Binaries
 ```groovy
 repositories {
