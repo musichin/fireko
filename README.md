@@ -9,6 +9,7 @@ Advantages over using [DocumentSnapshot::toObject](https://firebase.google.com/d
 
 ## Usage
 ```kotlin
+@Fireko
 data class User(
     @DocumentId val id: String,
     val firstName: String, 
