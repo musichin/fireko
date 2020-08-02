@@ -26,23 +26,8 @@ fun TypeName.isOneOf(vararg typeNames: TypeName): Boolean {
 fun TypeName.isAny(): Boolean =
     isOneOf(ANY)
 
-fun TypeName.isNumber(): Boolean =
-    isOneOf(NUMBER, CHAR, BYTE, SHORT, INT, LONG, FLOAT, DOUBLE)
-
-fun TypeName.isFloating(): Boolean =
-    isOneOf(FLOAT, DOUBLE)
-
-fun TypeName.isInstant(): Boolean =
-    isOneOf(TIME_INSTANT, BP_INSTANT)
-
-fun TypeName.isUtilDate(): Boolean =
-    isOneOf(UTIL_DATE)
-
 fun TypeName.isString(): Boolean =
     isOneOf(STRING)
-
-fun TypeName.isCharSequence(): Boolean =
-    isOneOf(CHAR_SEQUENCE, STRING)
 
 fun TypeName.isBoolean(): Boolean =
     isOneOf(BOOLEAN)

@@ -46,11 +46,11 @@ FirebaseFirestore.getInstance()
 ```
 
 ## Additionally supported types:
-* Instant
-* Uri
-* URI
-* URL
-* Currency
+* `java.time.*`
+* `android.net.Uri`
+* `java.net.URI`
+* `java.net.URL`
+* `java.util.Currency`
 
 ## Binaries
 ```groovy

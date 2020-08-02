@@ -10,7 +10,7 @@ import de.musichin.fireko.annotations.Embedded
 import de.musichin.fireko.annotations.Fireko
 import java.net.URI
 import java.net.URL
-import java.time.Instant
+import java.time.*
 import java.util.*
 
 @Fireko
@@ -27,6 +27,7 @@ data class ExamplePojo(
     val any: Any,
     val date: Date,
     val instant: Instant,
+    val timePojo: TimePojo,
     val geoPoint: GeoPoint,
     val timestamp: Timestamp,
     val androidUri: Uri,
@@ -71,6 +72,20 @@ data class EnumPojo(
     val simpleEnum: SimpleEnum,
     val simpleEnumOpt: SimpleEnum?,
     val complexEnum: ComplexEnum
+)
+
+@Fireko
+data class TimePojo(
+    val localDateTime: LocalDateTime,
+    val localDate: LocalDate,
+    val localTime: LocalTime,
+    val offsetDateTime: OffsetDateTime,
+    val offsetTime: OffsetTime,
+    val zonedDateTime: ZonedDateTime,
+    val zoneId: ZoneId,
+    val zoneOffset: ZoneOffset,
+    val period: Period,
+    val duration: Duration
 )
 
 @Fireko
