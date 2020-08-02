@@ -1,57 +1,72 @@
 package de.musichin.fireko.example
 
+import android.net.Uri
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.*
 import de.musichin.fireko.annotations.Embedded
 import de.musichin.fireko.annotations.Fireko
+import java.net.URI
+import java.net.URL
 import java.time.Instant
 import java.util.*
 
 @Fireko
 data class ExamplePojo(
-    val any: Any,
-    val firebaseGeoPoint: GeoPoint,
     @DocumentId val id: String,
     @DocumentId val idAsLong: Long,
-    val str: String,
     @PropertyName("p_str") val pStr: String,
-    val byte: Byte,
-    val short: Short,
-    val int: Int = 3,
-    val intOpt: Int?,
-    val longOpt: Long? = null,
-    val number: Number? = null,
-    val float: Float,
+    @Exclude val ignore: String? = null,
+    @Embedded val embeddedPojoWithDocId: EmbeddedPojoWithDocId,
+    @Embedded val primitivePojo: PrimitivePojo,
+    @Embedded val listPojo: ListPojo,
+    @Embedded val mapPojo: MapPojo,
+    @Embedded val enumPojo: EnumPojo,
+    val any: Any,
     val date: Date,
     val instant: Instant,
-    val charSequence: CharSequence,
-    @Exclude val ignore: String? = null,
-    val simpleEnum: SimpleEnum,
-    val simpleEnumOpt: SimpleEnum?,
-    val complexEnum: ComplexEnum,
-    val point: GeoPoint,
-    @Embedded val embeddedPojo: EmbeddedPojo?,
-    @Embedded val embeddedPojoWithDocId: EmbeddedPojoWithDocId,
-    val anotherPojo: AnotherPojo,
+    val geoPoint: GeoPoint,
+    val timestamp: Timestamp,
+    val androidUri: Uri,
+    val uri: URI,
+    val url: URL
+)
+
+@Fireko
+data class PrimitivePojo(
+    val char: Char,
+    val byte: Byte,
+    val short: Short,
+    val int: Int,
+    val long: Long,
+    val float: Float,
+    val double: Double,
+    val number: Number,
+    val string: String,
+    val charSequence: CharSequence
+)
+
+@Fireko
+data class ListPojo(
     val listAny: List<Any>,
     val listAnyOpt: List<Any?>,
     val listStringOpt: List<String?>,
     val listInt: List<Int>,
     val listIntOpt: List<Int>?,
-    val listListString: List<List<String>>,
+    val listListString: List<List<String>>
+)
+
+@Fireko
+data class MapPojo(
     val mapStringString: Map<String, String>,
     val mapStringInt: Map<String, Int>,
     val mapIntInt: Map<Int, Int>
 )
 
 @Fireko
-data class AnotherPojo(
-    @ServerTimestamp val d: Instant?
-)
-
-@Fireko
-data class EmbeddedPojo(
-    val a: String,
-    val b: Int
+data class EnumPojo(
+    val simpleEnum: SimpleEnum,
+    val simpleEnumOpt: SimpleEnum?,
+    val complexEnum: ComplexEnum
 )
 
 @Fireko

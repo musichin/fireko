@@ -1,9 +1,7 @@
 package de.musichin.fireko.processor
 
 import com.squareup.kotlinpoet.*
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import de.musichin.fireko.annotations.Embedded
-import de.musichin.fireko.annotations.Fireko
 
 internal val FIREBASE_PROPERTY_NAME =
     ClassName("com.google.firebase.firestore", "PropertyName")
@@ -31,6 +29,12 @@ internal val TIME_INSTANT =
     ClassName("java.time", "Instant")
 internal val BP_INSTANT =
     ClassName("org.threeten.bp", "Instant")
+internal val ANDROID_URI =
+    ClassName("android.net", "Uri")
+internal val URI =
+    ClassName("java.net", "URI")
+internal val URL =
+    ClassName("java.net", "URL")
 
 internal val EMBEDDED =
     ClassName(Embedded::class.java.`package`.name, Embedded::class.java.simpleName)

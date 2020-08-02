@@ -12,12 +12,14 @@ internal fun CodeBlock.Builder.deserialize(
 ): CodeBlock.Builder = apply {
     when (ValueType.valueOf(context, type)) {
         ValueType.STRING -> {
-            type as ClassName
-
-            convert(type.copy(nullable = nullable), type)
-
             if (context.isEnum(type)) {
+                type as ClassName
+
+                convert(type.copy(nullable = nullable), type)
+
                 deserializeEnum(context, type)
+            } else {
+                convert(ValueType.typeOf(context, type).copy(nullable = nullable), type)
             }
         }
         ValueType.ARRAY -> {
@@ -95,10 +97,12 @@ internal fun CodeBlock.Builder.serialize(
 ): CodeBlock.Builder = apply {
     when (ValueType.valueOf(context, type)) {
         ValueType.STRING -> {
-            type as ClassName
-
             if (context.isEnum(type)) {
+                type as ClassName
+
                 serializeEnum(context, type)
+            } else {
+                convert(type, ValueType.typeOf(context, type).copy(nullable = type.isNullable))
             }
         }
         ValueType.ARRAY -> {

@@ -44,10 +44,11 @@ FirebaseFirestore.getInstance()
     }
 ```
 
-## Additonally supported types:
+## Additionally supported types:
 * Instant
-* Uri (wip)
-* URL (wip)
+* Uri
+* URI
+* URL
 
 ## Binaries
 ```groovy

@@ -45,6 +45,9 @@ internal enum class ValueType {
             type.isFirebaseGeoPoint() -> GEO_POINT
             type.isFirebaseBlob() -> BYTES
             type.isFirebaseDocumentReference() -> REFERENCE
+            type.isOneOf(ANDROID_URI) -> STRING
+            type.isOneOf(URI) -> STRING
+            type.isOneOf(URL) -> STRING
 
             context.isEnum(type) -> STRING
             context.isPojo(type) -> MAP

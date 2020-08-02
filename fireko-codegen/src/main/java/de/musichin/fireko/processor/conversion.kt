@@ -16,6 +16,12 @@ private fun sources(target: TypeName): List<TypeName> = when (target.notNullable
         listOf(NUMBER, DOUBLE, FLOAT, LONG, INT, SHORT, BYTE, CHAR, STRING, CHAR_SEQUENCE)
     STRING, CHAR_SEQUENCE ->
         listOf(STRING, CHAR_SEQUENCE)
+    ANDROID_URI ->
+        listOf(ANDROID_URI, STRING)
+    URI ->
+        listOf(URI, STRING)
+    URL ->
+        listOf(URL, STRING)
     else -> listOf(target)
 }
 
@@ -102,6 +108,26 @@ internal fun CodeBlock.Builder.convert(
     source.isInstant() && target.isFirebaseTimestamp() -> {
         call(source)
         add("let { %T(it.epochSecond, it.nano) }", FIREBASE_TIMESTAMP)
+    }
+
+    source.isOneOf(STRING) && target.isOneOf(ANDROID_URI) -> {
+        call(source)
+        add("let(%T::parse)", ANDROID_URI)
+    }
+
+    source.isOneOf(ANDROID_URI) && target.isOneOf(STRING) -> {
+        call(source)
+        add("toString()")
+    }
+
+    source.isOneOf(STRING) && target.isOneOf(URI, URL) -> {
+        call(source)
+        add("let(::%T)", target.notNullable())
+    }
+
+    source.isOneOf(URI, URL) && target.isOneOf(STRING) -> {
+        call(source)
+        add("toString()")
     }
 
     else -> throwConversionError(source, target)
