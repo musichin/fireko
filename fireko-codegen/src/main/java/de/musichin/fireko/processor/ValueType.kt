@@ -48,6 +48,7 @@ internal enum class ValueType {
             type.isOneOf(ANDROID_URI) -> STRING
             type.isOneOf(URI) -> STRING
             type.isOneOf(URL) -> STRING
+            type.isOneOf(CURRENCY) -> STRING
 
             context.isEnum(type) -> STRING
             context.isPojo(type) -> MAP

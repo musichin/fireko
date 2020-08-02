@@ -22,6 +22,8 @@ private fun sources(target: TypeName): List<TypeName> = when (target.notNullable
         listOf(URI, STRING)
     URL ->
         listOf(URL, STRING)
+    CURRENCY ->
+        listOf(CURRENCY, STRING)
     else -> listOf(target)
 }
 
@@ -126,6 +128,16 @@ internal fun CodeBlock.Builder.convert(
     }
 
     source.isOneOf(URI, URL) && target.isOneOf(STRING) -> {
+        call(source)
+        add("toString()")
+    }
+
+    source.isOneOf(STRING) && target.isOneOf(CURRENCY) -> {
+        call(source)
+        add("let(%T::getInstance)", target.notNullable())
+    }
+
+    source.isOneOf(CURRENCY) && target.isOneOf(STRING) -> {
         call(source)
         add("toString()")
     }

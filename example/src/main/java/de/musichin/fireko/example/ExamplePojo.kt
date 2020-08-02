@@ -2,7 +2,10 @@ package de.musichin.fireko.example
 
 import android.net.Uri
 import com.google.firebase.Timestamp
-import com.google.firebase.firestore.*
+import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.Exclude
+import com.google.firebase.firestore.GeoPoint
+import com.google.firebase.firestore.PropertyName
 import de.musichin.fireko.annotations.Embedded
 import de.musichin.fireko.annotations.Fireko
 import java.net.URI
@@ -28,7 +31,8 @@ data class ExamplePojo(
     val timestamp: Timestamp,
     val androidUri: Uri,
     val uri: URI,
-    val url: URL
+    val url: URL,
+    val currency: Currency
 )
 
 @Fireko

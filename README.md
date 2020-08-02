@@ -50,6 +50,7 @@ FirebaseFirestore.getInstance()
 * Uri
 * URI
 * URL
+* Currency
 
 ## Binaries
 ```groovy

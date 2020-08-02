@@ -35,6 +35,8 @@ internal val URI =
     ClassName("java.net", "URI")
 internal val URL =
     ClassName("java.net", "URL")
+internal val CURRENCY =
+    ClassName("java.util", "Currency")
 
 internal val EMBEDDED =
     ClassName(Embedded::class.java.`package`.name, Embedded::class.java.simpleName)
