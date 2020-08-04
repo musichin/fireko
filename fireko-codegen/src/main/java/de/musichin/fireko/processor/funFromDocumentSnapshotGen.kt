@@ -65,7 +65,7 @@ private fun CodeBlock.Builder.genProperties(
     context: Context,
     params: List<TargetParameter>
 ) {
-    params.sortedBy { it.hasDefaultValue }.forEach { param ->
+    params.forEach { param ->
         add("%L", generateLocalProperty(context, param))
     }
 }

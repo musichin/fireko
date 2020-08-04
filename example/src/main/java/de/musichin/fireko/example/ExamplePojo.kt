@@ -33,7 +33,8 @@ data class ExamplePojo(
     val androidUri: Uri,
     val uri: URI,
     val url: URL,
-    val currency: Currency
+    val currency: Currency,
+    val androidCurrency: android.icu.util.Currency
 )
 
 @Fireko

@@ -8,11 +8,11 @@ internal object CurrencyConverter : Converter(), Converter.Factory {
         source: TypeName,
         target: TypeName
     ): CodeBlock.Builder = when {
-        source.isOneOf(STRING) && target.isOneOf(CURRENCY) -> {
+        source.isOneOf(STRING) && target.isCurrency() -> {
             call(source)
             add("let(%T::getInstance)", target.notNullable())
         }
-        source.isOneOf(CURRENCY) && target.isOneOf(CHAR_SEQUENCE, STRING) -> {
+        source.isCurrency() && target.isOneOf(CHAR_SEQUENCE, STRING) -> {
             call(source)
             add("toString()")
         }
@@ -23,12 +23,14 @@ internal object CurrencyConverter : Converter(), Converter.Factory {
     override val valueTypes: List<ValueType> = listOf(ValueType.STRING)
 
     override fun create(type: TypeName): Converter? {
-        if (type.isOneOf(CURRENCY)
-        ) return CurrencyConverter
+        if (type.isCurrency()) return CurrencyConverter
 
         return null
     }
 
-    private val CURRENCY =
-        ClassName("java.util", "Currency")
+    private fun TypeName.isCurrency(): Boolean {
+        if (this !is ClassName) return false
+        if (this.simpleName != "Currency") return false
+        return this.packageName in listOf("java.util", "android.icu.util")
+    }
 }
