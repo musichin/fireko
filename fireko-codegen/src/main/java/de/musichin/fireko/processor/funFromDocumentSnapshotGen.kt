@@ -12,22 +12,68 @@ internal fun genFunDocumentSnapshotToObject(context: Context, target: TargetClas
     .beginControlFlow("if (!exists())")
     .addStatement("return null")
     .endControlFlow()
-    .apply {
-        val params = target.params
-        params.forEach { parameter ->
-            addCode("%L", generateLocalProperty(context, parameter))
-        }
-
-        val paramNames = params.map { it.name }.joinToString(", ") { "$it = $it" }
-
-        addCode("return ${target.simpleName}($paramNames)")
-    }
+    .addCode(CodeBlock.builder().generateBody(context, target).build())
     .build()
+
+@KotlinPoetMetadataPreview
+private fun CodeBlock.Builder.generateBody(
+    context: Context,
+    target: TargetClass
+): CodeBlock.Builder = apply {
+    val params = target.params
+    genProperties(context, params)
+
+    genReturns(target)
+}
+
+@KotlinPoetMetadataPreview
+private fun CodeBlock.Builder.genReturns(
+    target: TargetClass,
+    index: Int = 0,
+    excludedParams: List<TargetParameter> = emptyList()
+) {
+    val paramsWithDefault = target.params.filter(TargetParameter::hasDefaultValue)
+    val param = paramsWithDefault.getOrNull(index)
+
+    if (param == null) {
+        val includedParams = paramsWithDefault - excludedParams
+        includedParams.forEach { includedParam ->
+            addStatement("requireNotNull(%L)", includedParam.name)
+        }
+        genReturn(target.params - excludedParams, target)
+        return
+    }
+
+    beginControlFlow("if (%L != null || contains(%S))", param.name, param.propertyName)
+    genReturns(target, index + 1, excludedParams)
+    nextControlFlow("else")
+    genReturns(target, index + 1, excludedParams + param)
+    endControlFlow()
+}
+
+@KotlinPoetMetadataPreview
+private fun CodeBlock.Builder.genReturn(params: List<TargetParameter>, target: TargetClass) {
+    val paramNames = params.map(TargetParameter::name).joinToString(", ") { name ->
+        "$name = $name"
+    }
+
+    addStatement("return %T($paramNames)", target.type.notNullable())
+}
+
+@KotlinPoetMetadataPreview
+private fun CodeBlock.Builder.genProperties(
+    context: Context,
+    params: List<TargetParameter>
+) {
+    params.sortedBy { it.hasDefaultValue }.forEach { param ->
+        add("%L", generateLocalProperty(context, param))
+    }
+}
 
 @KotlinPoetMetadataPreview
 private fun generateLocalProperty(context: Context, param: TargetParameter): PropertySpec =
     PropertySpec
-        .builder(param.name, param.type)
+        .builder(param.name, param.propertyType)
         .initializer(generateInitializer(context, param))
         .build()
 
@@ -50,7 +96,7 @@ private fun generateInitializer(context: Context, param: TargetParameter): CodeB
 
     return CodeBlock.builder()
         .add(getBaseInitializer(context, name, param.type))
-        .deserialize(context, param.type, true)
+        .deserialize(context, param.propertyType, true)
         .build()
 }
 
@@ -71,3 +117,6 @@ private fun getBaseInitializer(context: Context, name: String, type: TypeName) =
             CodeBlock.of("(get(%S) as %T)", name, ValueType.typeOf(context, type).nullable())
     }
 
+@KotlinPoetMetadataPreview
+private val TargetParameter.propertyType: TypeName
+    get() = type.copy(nullable = type.isNullable || hasDefaultValue)

@@ -44,18 +44,54 @@ internal fun genFunMapToObject(context: Context, target: TargetClass) = FunSpec
             addCode("%L", generateLocalProperty(context, target, parameter))
         }
 
-        val paramNames = params.map { it.name }.joinToString(", ") { "$it = $it" }
-
-        addCode("return ${target.simpleName}($paramNames)")
+        addCode(CodeBlock.builder().genReturns(target).build())
     }
     .build()
 
 @KotlinPoetMetadataPreview
-private fun generateLocalProperty(context: Context, target: TargetClass, param: TargetParameter): PropertySpec =
-    PropertySpec
-        .builder(param.name, param.type)
-        .initializer(generateInitializer(context, target, param))
-        .build()
+private fun generateLocalProperty(
+    context: Context,
+    target: TargetClass,
+    param: TargetParameter
+): PropertySpec = PropertySpec
+    .builder(param.name, param.propertyType)
+    .initializer(generateInitializer(context, target, param))
+    .build()
+
+@KotlinPoetMetadataPreview
+private fun CodeBlock.Builder.genReturns(
+    target: TargetClass,
+    index: Int = 0,
+    excludedParams: List<TargetParameter> = emptyList()
+): CodeBlock.Builder {
+    val paramsWithDefault = target.params.filter(TargetParameter::hasDefaultValue)
+    val param = paramsWithDefault.getOrNull(index)
+
+    if (param == null) {
+        val includedParams = paramsWithDefault - excludedParams
+        includedParams.forEach { includedParam ->
+            addStatement("requireNotNull(%L)", includedParam.name)
+        }
+        genReturn(target.params - excludedParams, target)
+        return this
+    }
+
+    beginControlFlow("if (%L != null || contains(%S))", param.name, param.propertyName)
+    genReturns(target, index + 1, excludedParams)
+    nextControlFlow("else")
+    genReturns(target, index + 1, excludedParams + param)
+    endControlFlow()
+    return this
+}
+
+@KotlinPoetMetadataPreview
+private fun CodeBlock.Builder.genReturn(params: List<TargetParameter>, target: TargetClass) {
+    val paramNames = params.map(TargetParameter::name).joinToString(", ") { name ->
+        "$name = $name"
+    }
+
+    addStatement("return %T($paramNames)", target.type.notNullable())
+}
 
 @KotlinPoetMetadataPreview
 private fun generateInitializer(
@@ -86,8 +122,8 @@ private fun generateInitializer(
     }
 
     return CodeBlock.builder()
-        .add(getBaseInitializer(context, name, param.type))
-        .deserialize(context, param.type, param.type.isNullable)
+        .add(getBaseInitializer(context, name, param.propertyType))
+        .deserialize(context, param.propertyType, param.propertyType.isNullable)
         .build()
 }
 
@@ -97,3 +133,7 @@ private fun getBaseInitializer(context: Context, name: String, type: TypeName): 
 
     return CodeBlock.of("(get(%S) as %T)", name, source.copy(nullable = type.isNullable))
 }
+
+@KotlinPoetMetadataPreview
+private val TargetParameter.propertyType: TypeName
+    get() = type.copy(nullable = type.isNullable || hasDefaultValue)

@@ -21,6 +21,8 @@ internal class TargetParameter(
 
     val propertyName: String = annotations.propertyName() ?: name
 
+    val hasDefaultValue: Boolean = parameterSpec.defaultValue != null
+
     val embedded: Boolean = hasAnnotation(EMBEDDED)
 
     val documentId: Boolean = hasAnnotation(FIREBASE_DOCUMENT_ID)
