@@ -44,14 +44,7 @@ internal fun genMapDeserializer(context: Context, target: TargetClass) = FunSpec
             addCode("%L", generateLocalProperty(context, target, parameter))
         }
 
-        when {
-            params.none(TargetParameter::hasDefaultValue) ->
-                addCode(CodeBlock.builder().genSimpleInitializer(target).build())
-            target.typeSpec.isData ->
-                addCode(CodeBlock.builder().getDataInitializer(target).build())
-            else ->
-                addCode(CodeBlock.builder().getClassInitializer(target).build())
-        }
+        addCode(genTargetClassInitializer(target))
     }
     .build()
 
@@ -66,79 +59,7 @@ private fun generateLocalProperty(
     .build()
 
 @KotlinPoetMetadataPreview
-private fun CodeBlock.Builder.getClassInitializer(target: TargetClass) = apply {
-    val params = target.params
-    val requiredParams = target.params.filter { !it.hasDefaultValue }
-
-    addStatement("var %L = %T(", target.resultName, target.type.asNotNullable())
-    paramBlock(requiredParams) { param ->
-        addStatement("%L = %L,", param.name, param.name)
-    }
-    addStatement(")")
-
-    addStatement("%L = %T(", target.resultName, target.type.asNotNullable())
-    paramBlock(params) { param ->
-        val name = param.name
-
-        if (param.hasDefaultValue) {
-            paramValueOrDefault(param, target)
-        } else {
-            addStatement("%L = %L,", name, name)
-        }
-    }
-    addStatement(")")
-
-    addStatement("return %L", target.resultName)
-}
-
-@KotlinPoetMetadataPreview
-private fun CodeBlock.Builder.getDataInitializer(target: TargetClass) = apply {
-    val params = target.params
-    val requiredParams = params.filter { !it.hasDefaultValue }
-    val defaultParams = target.params.filter { it.hasDefaultValue }
-
-    add("var %L = %T(\n", target.resultName, target.type.asNotNullable())
-    paramBlock(requiredParams) { param ->
-        addStatement("%L = %L,", param.name, param.name)
-    }
-    add(")\n")
-
-    add("%L = %L.copy(\n", target.resultName, target.resultName)
-    paramBlock(defaultParams) { param ->
-        paramValueOrDefault(param, target)
-    }
-    add(")\n")
-
-    addStatement("return %L", target.resultName)
-}
-
-@KotlinPoetMetadataPreview
-private fun CodeBlock.Builder.paramValueOrDefault(
-    param: TargetParameter,
-    target: TargetClass
-) {
-    val name = param.name
-    val th = CodeBlock.builder().assertNullability(param, true).build()
-    addStatement(
-        "%L = if (%L != null || contains(%S))\n⇥%L %L⇤\nelse\n⇥%L.%L,⇤",
-        name, name, param.propertyName, name, th, target.resultName, name
-    )
-}
-
-@KotlinPoetMetadataPreview
-private fun CodeBlock.Builder.genSimpleInitializer(target: TargetClass) = apply {
-    val params = target.params
-
-    add("return %T(\n", target.type.asNotNullable())
-    paramBlock(params) { param ->
-        val name = param.name
-        addStatement("%L = %L,", name, name)
-    }
-    add(")\n")
-}
-
-@KotlinPoetMetadataPreview
-private fun CodeBlock.Builder.assertNullability(param: TargetParameter, force: Boolean = false) = apply {
+private fun CodeBlock.Builder.assertNotNull(param: TargetParameter, force: Boolean = false) = apply {
     if (!param.type.isNullable && !param.hasDefaultValue || force) {
         add(" ?: throw NullPointerException(%S)", "Property ${param.propertyName} is absent or null.")
     }
@@ -175,7 +96,7 @@ private fun generateInitializer(
     return CodeBlock.builder()
         .add(getBaseInitializer(context, name, param.type.asNullable()))
         .deserialize(context, param.type.asNullable(), true)
-        .assertNullability(param)
+        .assertNotNull(param)
         .build()
 }
 

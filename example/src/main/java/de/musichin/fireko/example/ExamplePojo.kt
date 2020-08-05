@@ -25,7 +25,7 @@ data class ExamplePojo(
     @Embedded val mapPojo: MapPojo,
     @Embedded val enumPojo: EnumPojo,
     val any: Any,
-    val date: Date? = Date(),
+    val date: Date = Date(),
     val instant: Instant? = null,
     val timePojo: TimePojo,
     val geoPoint: GeoPoint,
