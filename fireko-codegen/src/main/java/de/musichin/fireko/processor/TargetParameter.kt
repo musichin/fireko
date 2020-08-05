@@ -2,6 +2,7 @@ package de.musichin.fireko.processor
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
+import java.lang.IllegalArgumentException
 import javax.lang.model.element.AnnotationMirror
 
 @KotlinPoetMetadataPreview

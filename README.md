@@ -62,7 +62,7 @@ repositories {
 
 dependencies {
     def fireko_version = 'x.y.z'
-    implementation "de.musichin.fireko:fireko:$fireko_version"
+    compileOnly "de.musichin.fireko:fireko:$fireko_version"
     kapt "de.musichin.fireko:fireko-codegen:$fireko_version"
 }
 ```

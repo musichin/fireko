@@ -10,7 +10,7 @@ internal object CurrencyConverter : Converter(), Converter.Factory {
     ): CodeBlock.Builder = when {
         source.isOneOf(STRING) && target.isCurrency() -> {
             call(source)
-            add("let(%T::getInstance)", target.notNullable())
+            add("let(%T::getInstance)", target.asNotNullable())
         }
         source.isCurrency() && target.isOneOf(CHAR_SEQUENCE, STRING) -> {
             call(source)

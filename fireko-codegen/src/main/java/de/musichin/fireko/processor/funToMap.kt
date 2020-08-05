@@ -9,7 +9,7 @@ internal fun genFunObjectToMap(context: Context, target: TargetClass) = FunSpec
     .builder("toMap")
     .addKdoc("Converts %T to %T.", target.type, MAP.parameterizedBy(STRING, ANY))
     .receiver(target.type)
-    .returns(MAP.parameterizedBy(STRING, ANY.nullable()))
+    .returns(MAP.parameterizedBy(STRING, ANY.asNullable()))
     .body(context, target)
     .build()
 
@@ -22,7 +22,7 @@ private fun FunSpec.Builder.body(context: Context, target: TargetClass) = apply 
     if (propertyParams.isEmpty()) {
         addCode("return emptyMap()")
     } else {
-        beginControlFlow("return mutableMapOf<%T, %T>().apply", STRING, ANY.nullable())
+        beginControlFlow("return mutableMapOf<%T, %T>().apply", STRING, ANY.asNullable())
         putParams(context, propertyParams)
         endControlFlow()
     }

@@ -58,7 +58,7 @@ internal fun CodeBlock.Builder.convert(
 
     source.isNullable && !target.isNullable -> {
         add(".let(::requireNotNull)")
-        convert(source.notNullable(), target)
+        convert(source.asNotNullable(), target)
     }
 
     target.isAny() -> this

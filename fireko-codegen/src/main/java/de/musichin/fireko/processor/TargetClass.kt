@@ -46,6 +46,18 @@ internal class TargetClass private constructor(
         }
     }
 
+    fun findFreeParamName(prefix: String): String {
+        var name = prefix
+
+        while (hasParamName(name)) {
+            name += "_"
+        }
+
+        return name
+    }
+
+    private fun hasParamName(name: String): Boolean = params.any { it.name == name }
+
     companion object {
         @KotlinPoetMetadataPreview
         fun create(context: Context, element: TargetElement): TargetClass {

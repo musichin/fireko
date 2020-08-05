@@ -41,7 +41,7 @@ internal fun CodeBlock.Builder.deserialize(
             if (context.isPojo(type)) {
                 type as ClassName
 
-                add(invokeToType(type.notNullable()))
+                add(invokeToType(type.nullable(nullable)))
             } else {
                 type as ParameterizedTypeName
 
@@ -76,16 +76,16 @@ private fun CodeBlock.Builder.deserializeEnum(context: Context, target: ClassNam
 
     if (propertyNames.isEmpty()) {
         return call(target)
-            .add("let { %T.valueOf(it) }", target.notNullable())
+            .add("let { %T.valueOf(it) }", target.asNotNullable())
     }
 
     call(target)
     beginControlFlow("let")
     beginControlFlow("when (it)")
     propertyNames.forEach { (name, propertyName) ->
-        addStatement("%S -> %T.%L", propertyName, target, name)
+        addStatement("%S -> %T.%L", propertyName, target.asNotNullable(), name)
     }
-    addStatement("else -> %T.valueOf(it)", target.notNullable())
+    addStatement("else -> %T.valueOf(it)", target.asNotNullable())
     endControlFlow()
     endControlFlow()
 }
@@ -109,10 +109,10 @@ internal fun CodeBlock.Builder.serialize(
             type as ParameterizedTypeName
 
             val parametrizedType = type.typeArguments.first()
-            if (peek { serialize(context, parametrizedType.notNullable()) }.isNotEmpty()) {
+            if (peek { serialize(context, parametrizedType.asNotNullable()) }.isNotEmpty()) {
                 call(type)
                 add("map { it")
-                serialize(context, parametrizedType.notNullable())
+                serialize(context, parametrizedType.asNotNullable())
                 add(" }")
             }
         }
@@ -131,14 +131,14 @@ internal fun CodeBlock.Builder.serialize(
                 if (!keyType.isString()) {
                     call(type)
                     add("mapKeys { (key, _) -> key")
-                    serialize(context, keyType.notNullable())
+                    serialize(context, keyType.asNotNullable())
                     add(" }")
                 }
 
-                if (peek { serialize(context, valueType.notNullable()) }.isNotEmpty()) {
+                if (peek { serialize(context, valueType.asNotNullable()) }.isNotEmpty()) {
                     call(type)
                     add("mapValues { (_, value) -> value")
-                    serialize(context, valueType.notNullable())
+                    serialize(context, valueType.asNotNullable())
                     add(" }")
                 }
             }

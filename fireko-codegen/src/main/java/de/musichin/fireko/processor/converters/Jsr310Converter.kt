@@ -10,7 +10,7 @@ internal sealed class Jsr310Converter : Converter() {
     ): CodeBlock.Builder = when {
         source.isOneOf(CHAR_SEQUENCE, STRING) && target.isIso() -> {
             call(source)
-            add("let(%T::parse)", target.notNullable())
+            add("let(%T::parse)", target.asNotNullable())
         }
         source.isIso() && target.isOneOf(CHAR_SEQUENCE, STRING) -> {
             call(source)
@@ -21,7 +21,7 @@ internal sealed class Jsr310Converter : Converter() {
             call(source)
             add(
                 "let { %T.ofEpochSecond(it.seconds, it.nanoseconds.toLong()) }",
-                target.notNullable()
+                target.asNotNullable()
             )
         }
         source.isInstant() && target.isFirebaseTimestamp() -> {
@@ -35,7 +35,7 @@ internal sealed class Jsr310Converter : Converter() {
         }
 
         source.isOneOf(LONG) && target.isInstant() -> {
-            add("let(%T::ofEpochMilli)", target.notNullable())
+            add("let(%T::ofEpochMilli)", target.asNotNullable())
         }
 
         else -> throwConversionError(source, target)
@@ -75,7 +75,7 @@ internal sealed class Jsr310Converter : Converter() {
         ): CodeBlock.Builder = when {
             source.isOneOf(STRING) && (target.isZoneId() || target.isZoneOffset()) -> {
                 call(source)
-                add("let(%T::of)", target.notNullable())
+                add("let(%T::of)", target.asNotNullable())
             }
             (source.isZoneId() || source.isZoneOffset()) && target.isOneOf(STRING) -> {
                 call(source)

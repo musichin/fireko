@@ -3,6 +3,7 @@ package de.musichin.fireko.processor
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 
 internal fun invokeToType(type: ClassName, vararg arguments: String): CodeBlock =
     invokeToType(type.isNullable, type.simpleName, *arguments)
@@ -31,3 +32,13 @@ internal fun CodeBlock.Builder.call(type: TypeName) = call(type.isNullable)
 
 internal fun toType(type: String) = "to${type.capitalize()}"
 internal fun toType(type: ClassName) = toType(type.simpleName)
+
+@KotlinPoetMetadataPreview
+internal inline fun CodeBlock.Builder.paramBlock(
+    params: List<TargetParameter>,
+    block: CodeBlock.Builder.(param: TargetParameter) -> Unit
+) {
+    add("⇥")
+    params.forEach { param -> block(param) }
+    add("⇤")
+}

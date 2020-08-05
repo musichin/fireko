@@ -11,17 +11,20 @@ fun List<AnnotationSpec>.get(typeName: TypeName): AnnotationSpec? =
 
 fun TypeName.isAssignable(initializer: TypeName): Boolean {
     if (this == initializer) return true
-    if (this.notNullable() != initializer.notNullable()) return false
+    if (this.asNotNullable() != initializer.asNotNullable()) return false
     return this.isNullable
 }
 
-fun <T : TypeName> T.notNullable(): T = copy(nullable = false) as T
-fun <T : TypeName> T.nullable(): T = copy(nullable = true) as T
+fun <T : TypeName> T.asNotNullable(): T = nullable(false)
+fun <T : TypeName> T.asNullable(): T = nullable(true)
+fun <T : TypeName> T.nullable(nullable: Boolean): T = copy(nullable = nullable) as T
 
 fun TypeName.isOneOf(vararg typeNames: TypeName): Boolean {
-    val thisNotNullable = (this as? ParameterizedTypeName)?.rawType ?: this.notNullable()
-    return typeNames.any { typeName -> thisNotNullable == typeName.notNullable() }
+    val thisNotNullable = (this as? ParameterizedTypeName)?.rawType ?: this.asNotNullable()
+    return typeNames.any { typeName -> thisNotNullable == typeName.asNotNullable() }
 }
+
+val TypeSpec.isData: Boolean get() = modifiers.contains(KModifier.DATA)
 
 fun TypeName.isAny(): Boolean =
     isOneOf(ANY)

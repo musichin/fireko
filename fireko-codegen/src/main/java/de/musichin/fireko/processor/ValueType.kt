@@ -49,7 +49,7 @@ internal enum class ValueType {
         @KotlinPoetMetadataPreview
         fun typeOf(context: Context, type: TypeName): TypeName {
             if (context.isPojo(type)) {
-                return LANG_MAP.parameterizedBy(LANG_STRING, LANG_ANY.nullable())
+                return LANG_MAP.parameterizedBy(LANG_STRING, LANG_ANY.asNullable())
             }
 
             val result = when (valueOf(context, type)) {

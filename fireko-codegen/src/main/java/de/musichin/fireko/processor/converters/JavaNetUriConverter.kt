@@ -10,7 +10,7 @@ internal object JavaNetUriConverter : Converter(), Converter.Factory {
     ): CodeBlock.Builder = when {
         source.isOneOf(STRING) && target.isOneOf(URI, URL) -> {
             call(source)
-            add("let(::%T)", target.notNullable())
+            add("let(::%T)", target.asNotNullable())
         }
         source.isOneOf(URI, URL) && target.isOneOf(CHAR_SEQUENCE, STRING) -> {
             call(source)

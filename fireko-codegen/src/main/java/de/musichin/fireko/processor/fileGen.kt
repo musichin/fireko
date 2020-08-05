@@ -24,8 +24,8 @@ internal fun generateFile(context: Context, element: TargetElement): FileSpec {
                 addImport(it.packageName, "toMap")
             }
         }
-        .addFunction(genFunDocumentSnapshotToObject(context, target))
-        .addFunction(genFunMapToObject(context, target))
+        .addFunction(genDocumentSnapshotDeserializer(context, target))
+        .addFunction(genMapDeserializer(context, target))
         .addFunction(genFunObjectToMap(context, target))
         .build()
 }
