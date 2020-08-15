@@ -1,4 +1,4 @@
-# Firestore Kotlin Data Convertor [ ![Download](https://api.bintray.com/packages/musichin/maven/fireko/images/download.svg)](https://bintray.com/musichin/maven/fireko/_latestVersion) [![Kotlin](https://img.shields.io/badge/Kotlin-1.3.72-blue.svg)](http://kotlinlang.org) ![CI](https://github.com/musichin/fireko/workflows/CI/badge.svg)
+# Firestore Kotlin Data Convertor [ ![Download](https://api.bintray.com/packages/musichin/maven/fireko/images/download.svg)](https://bintray.com/musichin/maven/fireko/_latestVersion) [![Kotlin](https://img.shields.io/badge/Kotlin-1.4.0-blue.svg)](http://kotlinlang.org) ![CI](https://github.com/musichin/fireko/workflows/CI/badge.svg)
 
 Fireko does generate functions to convert `DocumentSnapshot` to your (data) classes. What you have to do is to annotate it with `Fireko` and the rest is done automatically.
 
