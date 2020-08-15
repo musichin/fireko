@@ -59,9 +59,9 @@ private fun generateLocalProperty(
     .build()
 
 @KotlinPoetMetadataPreview
-private fun CodeBlock.Builder.assertNotNull(param: TargetParameter, force: Boolean = false) = apply {
-    if (!param.type.isNullable && !param.hasDefaultValue || force) {
-        add(" ?: throw NullPointerException(%S)", "Property ${param.propertyName} is absent or null.")
+private fun CodeBlock.Builder.assertNotNull(param: TargetParameter) = apply {
+    if (!param.type.isNullable && !param.hasDefaultValue) {
+        add("?: throw NullPointerException(%S)", "Property ${param.propertyName} is absent or null.")
     }
 }
 
