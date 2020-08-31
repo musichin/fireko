@@ -1,5 +1,8 @@
 package de.musichin.fireko.annotations
 
+/**
+ * Embeds all properties into declaring class.
+ */
 @Target(
     AnnotationTarget.FIELD,
     AnnotationTarget.VALUE_PARAMETER,

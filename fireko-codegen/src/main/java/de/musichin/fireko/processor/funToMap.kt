@@ -1,7 +1,11 @@
 package de.musichin.fireko.processor
 
-import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ANY
+import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.MAP
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 
 @KotlinPoetMetadataPreview
@@ -43,15 +47,25 @@ private fun putter(context: Context, param: TargetParameter): CodeBlock =
         } else {
             CodeBlock.of("putAll(%L)\n", serialize(context, param))
         }
+    } else if (!param.omitNullValue || !param.type.isNullable || param.serverTimestamp) {
+        CodeBlock.of("put(%S, %L)\n", param.propertyName, serialize(context, param))
     } else {
-        CodeBlock.of("put(%S, %L)\n", param.name, serialize(context, param))
+        CodeBlock.builder()
+            .beginControlFlow("if (%L != null)", param.name)
+            .add("put(%S, %L)\n", param.propertyName, serialize(context, param, false))
+            .endControlFlow()
+            .build()
     }
 
 @KotlinPoetMetadataPreview
-private fun serialize(context: Context, param: TargetParameter): CodeBlock {
+private fun serialize(
+    context: Context,
+    param: TargetParameter,
+    nullable: Boolean = param.type.isNullable
+): CodeBlock {
     return CodeBlock.builder()
         .add("%L", param.name)
-        .serialize(context, param.type)
+        .serialize(context, param.type.nullable(nullable))
         .apply {
             if (param.serverTimestamp && param.type.isNullable) {
                 add("?:")

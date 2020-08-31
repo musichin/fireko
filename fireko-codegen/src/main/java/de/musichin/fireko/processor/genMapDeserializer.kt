@@ -104,6 +104,10 @@ private fun generateInitializer(
 private fun getBaseInitializer(context: Context, name: String, type: TypeName): CodeBlock {
     val source = ValueType.typeOf(context, type)
 
+    if (source.isOneOf(ANY.asNullable())) {
+        return CodeBlock.of("get(%S)", name)
+    }
+
     return CodeBlock.of("(get(%S) as %T)", name, source.copy(nullable = type.isNullable))
 }
 

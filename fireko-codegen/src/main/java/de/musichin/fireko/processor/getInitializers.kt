@@ -75,10 +75,15 @@ private fun CodeBlock.Builder.paramValueOrDefault(
 ) {
     val name = param.name
     val th = CodeBlock.builder().assertNotNull(param).build()
-    addStatement(
-        "%L = if (%L != null || contains(%S))\n⇥%L %L⇤\nelse\n⇥%L.%L,⇤",
-        name, name, param.propertyName, name, th, target.resultName, name
-    )
+
+    if (param.presetNullValue) {
+        addStatement("%L = %L ?: %L.%L,", name, name, target.resultName, name)
+    } else {
+        addStatement(
+            "%L = if (%L != null || contains(%S))\n⇥%L %L⇤\nelse\n⇥%L.%L,⇤",
+            name, name, param.propertyName, name, th, target.resultName, name
+        )
+    }
 }
 
 @KotlinPoetMetadataPreview
@@ -95,7 +100,7 @@ private fun CodeBlock.Builder.genSimpleInitializer(target: TargetClass) = apply 
 
 @KotlinPoetMetadataPreview
 private fun CodeBlock.Builder.assertNotNull(param: TargetParameter) = apply {
-    if (!param.type.isNullable) {
+    if (!param.type.isNullable && !param.presetNullValue) {
         add(" ?: throw NullPointerException(%S)", "Property ${param.propertyName} is null.")
     }
 }

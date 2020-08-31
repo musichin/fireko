@@ -1,8 +1,11 @@
 package de.musichin.fireko.processor
 
-import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.AnnotationSpec
+import com.squareup.kotlinpoet.ParameterSpec
+import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
-import java.lang.IllegalArgumentException
+import com.squareup.kotlinpoet.tag
 import javax.lang.model.element.AnnotationMirror
 
 @KotlinPoetMetadataPreview
@@ -24,6 +27,12 @@ internal class TargetParameter(
 
     val hasDefaultValue: Boolean = parameterSpec.defaultValue != null
 
+    val omitNullValue = annotations.annotationValue(NULL_VALUE, "omit") == true
+            && type.isNullable
+
+    val presetNullValue = annotations.annotationValue(NULL_VALUE, "preset") == true
+            && hasDefaultValue
+
     val embedded: Boolean = hasAnnotation(EMBEDDED)
 
     val documentId: Boolean = hasAnnotation(FIREBASE_DOCUMENT_ID)
@@ -42,14 +51,19 @@ internal class TargetParameter(
             return annotations + fieldAnnotations
         }
 
-        internal fun List<AnnotationSpec>.propertyName(): String? = get(FIREBASE_PROPERTY_NAME)
+        internal fun List<AnnotationSpec>.propertyName(): String? =
+            annotationValue(FIREBASE_PROPERTY_NAME, "value")?.toString()
+
+        internal fun List<AnnotationSpec>.annotationValue(
+            annotation: TypeName,
+            property: String
+        ): Any? = get(annotation)
             ?.tag<AnnotationMirror>()
             ?.elementValues
             ?.entries
-            ?.single { it.key.simpleName.contentEquals("value") }
+            ?.singleOrNull { it.key.simpleName.contentEquals(property) }
             ?.value
             ?.value
-            ?.toString()
 
         @KotlinPoetMetadataPreview
         fun create(element: TargetElement, parameter: ParameterSpec): TargetParameter {
