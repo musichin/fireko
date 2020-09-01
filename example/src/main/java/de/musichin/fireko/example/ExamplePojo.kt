@@ -8,7 +8,7 @@ import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.PropertyName
 import de.musichin.fireko.annotations.Embedded
 import de.musichin.fireko.annotations.Fireko
-import de.musichin.fireko.annotations.NullValue
+import de.musichin.fireko.annotations.NullValues
 import java.net.URI
 import java.net.URL
 import java.time.Duration
@@ -26,18 +26,19 @@ import java.util.Currency
 import java.util.Date
 
 @Fireko
+@NullValues(omit = true, preset = true)
 data class ExamplePojo(
     @DocumentId val id: String,
     @DocumentId val idAsLong: Long,
     @PropertyName("p_str") val pStr: String,
     @Exclude val ignore: String? = null,
     @Embedded val embeddedPojoWithDocId: EmbeddedPojoWithDocId,
-    @Embedded val primitivePojo: PrimitivePojo,
+    @Embedded val primitivePojo: PrimitivePojo?,
     @Embedded val listPojo: ListPojo,
     @Embedded val mapPojo: MapPojo,
     @Embedded val enumPojo: EnumPojo,
     val any: Any,
-    @NullValue(omit = true, preset = true) val date: Date? = Date(),
+    val date: Date = Date(),
     val instant: Instant? = null,
     val timePojo: TimePojo,
     val geoPoint: GeoPoint,

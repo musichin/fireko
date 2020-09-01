@@ -10,6 +10,10 @@ package de.musichin.fireko.annotations
     AnnotationTarget.FIELD,
     AnnotationTarget.VALUE_PARAMETER,
     AnnotationTarget.PROPERTY,
+    AnnotationTarget.CLASS,
 )
 @Retention(AnnotationRetention.SOURCE)
-annotation class NullValue(val omit: Boolean = false, val preset: Boolean = false)
+annotation class NullValues(
+    val omit: Boolean = false,
+    val preset: Boolean = false
+)

@@ -2,7 +2,7 @@ package de.musichin.fireko.processor
 
 import com.squareup.kotlinpoet.*
 import de.musichin.fireko.annotations.Embedded
-import de.musichin.fireko.annotations.NullValue
+import de.musichin.fireko.annotations.NullValues
 
 internal val FIREBASE_PROPERTY_NAME =
     ClassName("com.google.firebase.firestore", "PropertyName")
@@ -24,8 +24,3 @@ internal val FIREBASE_SERVER_TIMESTAMP =
     ClassName("com.google.firebase.firestore", "ServerTimestamp")
 internal val FIREBASE_FIELD_VALUE =
     ClassName("com.google.firebase.firestore", "FieldValue")
-
-internal val EMBEDDED =
-    ClassName(Embedded::class.java.`package`.name, Embedded::class.java.simpleName)
-internal val NULL_VALUE =
-    ClassName(NullValue::class.java.`package`.name, NullValue::class.java.simpleName)

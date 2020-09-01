@@ -4,20 +4,24 @@ import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 import com.squareup.kotlinpoet.tag
+import de.musichin.fireko.annotations.Embedded
+import de.musichin.fireko.annotations.NullValues
 import javax.lang.model.element.AnnotationMirror
 
 @KotlinPoetMetadataPreview
 internal class TargetParameter(
-    targetTypeSpec: TypeSpec,
-    parameterSpec: ParameterSpec
+    targetElement: TargetElement,
+    parameterSpec: ParameterSpec,
 ) {
     val name = parameterSpec.name
 
     val type = parameterSpec.type
 
-    val annotations: List<AnnotationSpec> = parameterSpec.propertyAnnotations(targetTypeSpec)
+    val annotations: List<AnnotationSpec> = parameterSpec.propertyAnnotations(targetElement.typeSpec)
 
     val exclude: Boolean = hasAnnotation(FIREBASE_EXCLUDE)
 
@@ -27,13 +31,16 @@ internal class TargetParameter(
 
     val hasDefaultValue: Boolean = parameterSpec.defaultValue != null
 
-    val omitNullValue = annotations.annotationValue(NULL_VALUE, "omit") == true
-            && type.isNullable
+    private val targetNullValues: NullValues? =
+        targetElement.element.getAnnotation(NullValues::class.java)
 
-    val presetNullValue = annotations.annotationValue(NULL_VALUE, "preset") == true
-            && hasDefaultValue
+    val omitNullValue = type.isNullable &&
+            (annotations.nullValuesOmit() || targetNullValues?.omit == true)
 
-    val embedded: Boolean = hasAnnotation(EMBEDDED)
+    val presetNullValue = hasDefaultValue &&
+            (annotations.nullValuesPreset() || targetNullValues?.preset == true)
+
+    val embedded: Boolean = hasAnnotation(Embedded::class.asClassName())
 
     val documentId: Boolean = hasAnnotation(FIREBASE_DOCUMENT_ID)
 
@@ -54,6 +61,12 @@ internal class TargetParameter(
         internal fun List<AnnotationSpec>.propertyName(): String? =
             annotationValue(FIREBASE_PROPERTY_NAME, "value")?.toString()
 
+        internal fun List<AnnotationSpec>.nullValuesOmit(): Boolean =
+            annotationValue(NullValues::class.asClassName(), "omit") == true
+
+        internal fun List<AnnotationSpec>.nullValuesPreset(): Boolean =
+            annotationValue(NullValues::class.asClassName(), "preset") == true
+
         internal fun List<AnnotationSpec>.annotationValue(
             annotation: TypeName,
             property: String
@@ -67,9 +80,7 @@ internal class TargetParameter(
 
         @KotlinPoetMetadataPreview
         fun create(element: TargetElement, parameter: ParameterSpec): TargetParameter {
-            val targetTypeSpec = element.typeSpec
-
-            return TargetParameter(targetTypeSpec, parameter)
+            return TargetParameter(element, parameter)
         }
     }
 }
