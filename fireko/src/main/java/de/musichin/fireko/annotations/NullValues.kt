@@ -12,7 +12,7 @@ package de.musichin.fireko.annotations
     AnnotationTarget.PROPERTY,
     AnnotationTarget.CLASS,
 )
-@Retention(AnnotationRetention.SOURCE)
+@Retention(AnnotationRetention.RUNTIME)
 annotation class NullValues(
     val omit: Boolean = false,
     val preset: Boolean = false

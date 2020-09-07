@@ -60,7 +60,7 @@ internal class TargetClass private constructor(
 
     companion object {
         @KotlinPoetMetadataPreview
-        fun create(context: Context, element: TargetElement): TargetClass {
+        fun create(context: Context, element: ClassElement): TargetClass {
             val constructor = element.typeSpec.primaryConstructor
                 ?: throw IllegalArgumentException("${element.className} has no default constructor")
 

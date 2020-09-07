@@ -6,6 +6,7 @@ import com.squareup.kotlinpoet.classinspector.elements.ElementsClassInspector
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 import com.squareup.kotlinpoet.metadata.specs.ClassInspector
 import de.musichin.fireko.annotations.Fireko
+import de.musichin.fireko.annotations.FirekoAdapter
 import java.io.File
 import javax.annotation.processing.AbstractProcessor
 import javax.annotation.processing.ProcessingEnvironment
@@ -21,8 +22,12 @@ class FirekoAnnotationProcessor : AbstractProcessor() {
     private lateinit var classInspector: ClassInspector
     private lateinit var elements: Elements
 
-    override fun getSupportedAnnotationTypes(): MutableSet<String> =
-        mutableSetOf(Fireko::class.java.canonicalName)
+    override fun getSupportedAnnotationTypes(): MutableSet<String> = mutableSetOf(
+        Fireko::class.java.canonicalName,
+        FirekoAdapter::class.java.canonicalName,
+        FirekoAdapter.Read::class.java.canonicalName,
+        FirekoAdapter.Write::class.java.canonicalName,
+    )
 
     override fun getSupportedSourceVersion(): SourceVersion = SourceVersion.latest()
 
@@ -31,9 +36,15 @@ class FirekoAnnotationProcessor : AbstractProcessor() {
         roundEnv: RoundEnvironment?
     ): Boolean {
         val annotatedElements = roundEnv?.getElementsAnnotatedWith(Fireko::class.java).orEmpty()
-        val context = Context(annotatedElements, elements, classInspector)
+        val adapterRead =
+            roundEnv?.getElementsAnnotatedWith(FirekoAdapter.Read::class.java).orEmpty()
+        val adapterWrite =
+            roundEnv?.getElementsAnnotatedWith(FirekoAdapter.Write::class.java).orEmpty()
+        val adapters = (adapterRead + adapterWrite).map { it.enclosingElement }.distinct()
 
-        context.targetElements.forEach { target ->
+        val context = Context(annotatedElements, adapters, elements, classInspector)
+
+        context.classElements.forEach { target ->
             process(context, target)
         }
 
@@ -47,7 +58,7 @@ class FirekoAnnotationProcessor : AbstractProcessor() {
         classInspector = ElementsClassInspector.create(elements, env.typeUtils)
     }
 
-    private fun process(context: Context, element: TargetElement) {
+    private fun process(context: Context, element: ClassElement) {
         val fileSpec = generateFile(context, element)
         writeToFile(fileSpec)
     }

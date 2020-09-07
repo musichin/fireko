@@ -8,6 +8,7 @@ import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.PropertyName
 import de.musichin.fireko.annotations.Embedded
 import de.musichin.fireko.annotations.Fireko
+import de.musichin.fireko.annotations.FirekoAdapter
 import de.musichin.fireko.annotations.NullValues
 import java.net.URI
 import java.net.URL
@@ -37,6 +38,7 @@ data class ExamplePojo(
     @Embedded val listPojo: ListPojo,
     @Embedded val mapPojo: MapPojo,
     @Embedded val enumPojo: EnumPojo,
+    val latLng: LatLng?,
     val any: Any,
     @NullValues val date: Date = Date(),
     val instant: Instant? = null,
@@ -47,8 +49,19 @@ data class ExamplePojo(
     val uri: URI,
     val url: URL,
     val currency: Currency,
-    val androidCurrency: android.icu.util.Currency
+    val androidCurrency: android.icu.util.Currency,
 )
+
+@FirekoAdapter(LatLngAdapter::class)
+data class LatLng(val lat: Double, val lng: Double)
+
+object LatLngAdapter {
+    @FirekoAdapter.Read
+    fun read(value: GeoPoint): LatLng = value.run { LatLng(latitude, longitude) }
+
+    @FirekoAdapter.Write
+    fun write(value: LatLng): GeoPoint = value.run { GeoPoint(lat, lng) }
+}
 
 @Fireko
 data class PrimitivePojo(

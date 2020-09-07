@@ -1,6 +1,7 @@
 package de.musichin.fireko.processor
 
 import com.squareup.kotlinpoet.*
+import javax.lang.model.element.AnnotationMirror
 
 operator fun CodeBlock.plus(other: CodeBlock): CodeBlock {
     return CodeBlock.Builder().add(this).add(other).build()
@@ -8,6 +9,14 @@ operator fun CodeBlock.plus(other: CodeBlock): CodeBlock {
 
 fun List<AnnotationSpec>.get(typeName: TypeName): AnnotationSpec? =
     find { it.typeName == typeName }
+
+internal fun AnnotationSpec.value(property: String): Any? =
+    tag<AnnotationMirror>()
+        ?.elementValues
+        ?.entries
+        ?.singleOrNull { it.key.simpleName.toString() == property }
+        ?.value
+        ?.value
 
 fun TypeName.isAssignable(initializer: TypeName): Boolean {
     if (this == initializer) return true

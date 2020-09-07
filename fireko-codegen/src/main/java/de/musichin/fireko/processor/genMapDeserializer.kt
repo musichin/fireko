@@ -93,9 +93,25 @@ private fun generateInitializer(
             .build()
     }
 
+    val adapter = param.usingAdapter?.let { context.adapterElement(it) } ?:
+    context.getAnnotatedAdapter(type)
+    if (adapter != null) {
+        return if (adapter.readFunSpec != null) {
+            val sourceType = adapter.readFunSpec.parameters.first().type
+            CodeBlock.builder()
+                .add(getBaseInitializer(context, name, sourceType.asNullable()))
+                .deserialize(context, sourceType.asNullable(), true)
+                .add("?.let(%L::%L)", adapter.className, adapter.readFunSpec.name)
+                .assertNotNull(param)
+                .build()
+        } else {
+            CodeBlock.of("Adapter should contain read method.")
+        }
+    }
+
     return CodeBlock.builder()
-        .add(getBaseInitializer(context, name, param.type.asNullable()))
-        .deserialize(context, param.type.asNullable(), true)
+        .add(getBaseInitializer(context, name, type.asNullable()))
+        .deserialize(context, type.asNullable(), true)
         .assertNotNull(param)
         .build()
 }

@@ -40,22 +40,25 @@ private fun FunSpec.Builder.putParams(context: Context, params: List<TargetParam
 }
 
 @KotlinPoetMetadataPreview
-private fun putter(context: Context, param: TargetParameter): CodeBlock =
+private fun putter(context: Context, param: TargetParameter): CodeBlock {
     if (param.embedded) {
-        if (param.type.isNullable) {
+        return if (param.type.isNullable) {
             CodeBlock.of("putAll(%L.orEmpty())\n", serialize(context, param))
         } else {
             CodeBlock.of("putAll(%L)\n", serialize(context, param))
         }
-    } else if (!param.omitNullValue || !param.type.isNullable || param.serverTimestamp) {
-        CodeBlock.of("put(%S, %L)\n", param.propertyName, serialize(context, param))
-    } else {
-        CodeBlock.builder()
+    }
+
+    if (!param.omitNullValue || !param.type.isNullable || param.serverTimestamp) {
+        return CodeBlock.of("put(%S, %L)\n", param.propertyName, serialize(context, param))
+    }
+
+    return CodeBlock.builder()
             .beginControlFlow("if (%L != null)", param.name)
             .add("put(%S, %L)\n", param.propertyName, serialize(context, param, false))
             .endControlFlow()
             .build()
-    }
+}
 
 @KotlinPoetMetadataPreview
 private fun serialize(
@@ -63,6 +66,22 @@ private fun serialize(
     param: TargetParameter,
     nullable: Boolean = param.type.isNullable
 ): CodeBlock {
+    val adapter = param.usingAdapter?.let { context.adapterElement(it) } ?:
+    context.getAnnotatedAdapter(param.type)
+    if (adapter != null) {
+        return if (adapter.writeFunSpec != null) {
+            val targetType = requireNotNull(adapter.writeFunSpec.returnType)
+            CodeBlock.builder()
+                .add("%L", param.name)
+                .serialize(context, targetType.nullable(nullable))
+                .call(nullable)
+                .add("let(%L::%L)", adapter.className, adapter.writeFunSpec.name)
+                .build()
+        } else {
+            CodeBlock.of("Adapter should contain write method.")
+        }
+    }
+
     return CodeBlock.builder()
         .add("%L", param.name)
         .serialize(context, param.type.nullable(nullable))

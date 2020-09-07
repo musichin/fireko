@@ -16,6 +16,7 @@ data class User(
     val lastName: String,
     @ServerTimestamp val createdAt: Instant? = null,
     @Embedded val address: Address,
+    val position: LatLng,
 )
 
 @Fireko
@@ -25,6 +26,18 @@ data class Address(
     @PropertyName("zip_code") val zipCode: String,
     val country: String,
 )
+
+@FirekoAdapter(LatLngAdapter::class)
+data class LatLng(val lat: Double, val lng: Double)
+
+object LatLngAdapter {
+    @FirekoAdapter.Read
+    fun read(value: GeoPoint): LatLng = value.run { LatLng(latitude, longitude) }
+
+    @FirekoAdapter.Write
+    fun write(value: LatLng): GeoPoint = value.run { GeoPoint(lat, lng) }
+}
+
 
 // query user
 FirebaseFirestore.getInstance()

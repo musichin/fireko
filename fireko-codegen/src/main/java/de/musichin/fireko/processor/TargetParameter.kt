@@ -6,14 +6,14 @@ import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
-import com.squareup.kotlinpoet.tag
 import de.musichin.fireko.annotations.Embedded
+import de.musichin.fireko.annotations.FirekoAdapter
 import de.musichin.fireko.annotations.NullValues
-import javax.lang.model.element.AnnotationMirror
+import javax.lang.model.type.DeclaredType
 
 @KotlinPoetMetadataPreview
 internal class TargetParameter(
-    targetElement: TargetElement,
+    classElement: ClassElement,
     parameterSpec: ParameterSpec,
 ) {
     val name = parameterSpec.name
@@ -21,7 +21,7 @@ internal class TargetParameter(
     val type = parameterSpec.type
 
     val annotations: List<AnnotationSpec> =
-        parameterSpec.propertyAnnotations(targetElement.typeSpec)
+        parameterSpec.propertyAnnotations(classElement.typeSpec)
 
     val exclude: Boolean = hasAnnotation(FIREBASE_EXCLUDE)
 
@@ -31,8 +31,14 @@ internal class TargetParameter(
 
     val hasDefaultValue: Boolean = parameterSpec.defaultValue != null
 
+    val usingAdapter = annotations
+        .get(FirekoAdapter::class.asClassName())
+        ?.value("using")
+        ?.let { it as DeclaredType }
+        ?.asElement()
+
     private val targetNullValues: NullValues? =
-        targetElement.element.getAnnotation(NullValues::class.java)
+        classElement.element.getAnnotation(NullValues::class.java)
 
     private val propertyNullValues: NullValues? by lazy {
         val nullValues = annotations.get(NullValues::class.asClassName())
@@ -78,16 +84,8 @@ internal class TargetParameter(
             property: String
         ): Any? = get(annotation)?.value(property)
 
-        internal fun AnnotationSpec.value(property: String): Any? =
-            tag<AnnotationMirror>()
-                ?.elementValues
-                ?.entries
-                ?.singleOrNull { it.key.simpleName.contentEquals(property) }
-                ?.value
-                ?.value
-
         @KotlinPoetMetadataPreview
-        fun create(element: TargetElement, parameter: ParameterSpec): TargetParameter {
+        fun create(element: ClassElement, parameter: ParameterSpec): TargetParameter {
             return TargetParameter(element, parameter)
         }
     }
