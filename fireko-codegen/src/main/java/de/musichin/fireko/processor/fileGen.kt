@@ -27,6 +27,7 @@ internal fun generateFile(context: Context, element: ClassElement): FileSpec {
         .addFunction(genDocumentSnapshotDeserializer(context, target))
         .addFunction(genMapDeserializer(context, target))
         .addFunction(genFunObjectToMap(context, target))
+        .addType(genUpdateClass(context, target))
         .apply {
             getFirestoreExtensions(target).forEach(this::addFunction)
         }

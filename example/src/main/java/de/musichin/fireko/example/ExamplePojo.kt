@@ -4,6 +4,7 @@ import android.net.Uri
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.Exclude
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.PropertyName
 import de.musichin.fireko.annotations.Embedded
@@ -61,6 +62,31 @@ object LatLngAdapter {
 
     @FirekoAdapter.Write
     fun write(value: LatLng): GeoPoint = value.run { GeoPoint(lat, lng) }
+}
+
+class Update {
+    private val values = mutableMapOf<String, Any?>()
+    inner class LatLngUpdate {
+        fun delete() {
+            values["latLng"] = FieldValue.delete()
+        }
+
+        fun set(value: LatLng) {
+
+        }
+    }
+
+    val latLng: LatLngUpdate = LatLngUpdate()
+
+    fun toMap(): Map<String, Any?> {
+        return emptyMap()
+    }
+}
+
+fun updateObj() {
+    ExamplePojoUpdate().apply {
+        latLng to LatLng(0.0, 0.0)
+    }
 }
 
 @Fireko

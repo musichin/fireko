@@ -19,7 +19,7 @@ internal fun CodeBlock.Builder.deserialize(
 
                 deserializeEnum(context, type)
             } else {
-                convert(ValueType.typeOf(context, type).copy(nullable = nullable), type)
+                convert(ValueType.typeOf(context, type).nullable(nullable), type)
             }
         }
         ValueType.ARRAY -> {
