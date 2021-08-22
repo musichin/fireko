@@ -1,7 +1,18 @@
 package de.musichin.fireko.processor.converters
 
-import com.squareup.kotlinpoet.*
-import de.musichin.fireko.processor.*
+import com.squareup.kotlinpoet.CHAR_SEQUENCE
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.LONG
+import com.squareup.kotlinpoet.STRING
+import com.squareup.kotlinpoet.TypeName
+import de.musichin.fireko.processor.Converter
+import de.musichin.fireko.processor.FIREBASE_TIMESTAMP
+import de.musichin.fireko.processor.ValueType
+import de.musichin.fireko.processor.asNotNullable
+import de.musichin.fireko.processor.call
+import de.musichin.fireko.processor.isFirebaseTimestamp
+import de.musichin.fireko.processor.isOneOf
 
 internal sealed class Jsr310Converter : Converter() {
     override fun CodeBlock.Builder.convert(
@@ -112,10 +123,10 @@ internal sealed class Jsr310Converter : Converter() {
         private fun TypeName.isDuration() = isSupportedClass("Duration")
 
         private fun TypeName.isIso() = isInstant() ||
-                isLocalDateTime() || isLocalDate() || isLocalTime() ||
-                isOffsetDateTime() || isOffsetTime() ||
-                isZonedDateTime() ||
-                isPeriod() ||
-                isDuration()
+            isLocalDateTime() || isLocalDate() || isLocalTime() ||
+            isOffsetDateTime() || isOffsetTime() ||
+            isZonedDateTime() ||
+            isPeriod() ||
+            isDuration()
     }
 }

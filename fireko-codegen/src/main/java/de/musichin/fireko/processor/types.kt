@@ -1,8 +1,6 @@
 package de.musichin.fireko.processor
 
-import com.squareup.kotlinpoet.*
-import de.musichin.fireko.annotations.Embedded
-import de.musichin.fireko.annotations.NullValues
+import com.squareup.kotlinpoet.ClassName
 
 internal val FIREBASE_PROPERTY_NAME =
     ClassName("com.google.firebase.firestore", "PropertyName")

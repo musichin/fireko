@@ -1,8 +1,24 @@
 package de.musichin.fireko.processor.converters
 
-import com.squareup.kotlinpoet.*
-import de.musichin.fireko.processor.*
+import com.squareup.kotlinpoet.BYTE
+import com.squareup.kotlinpoet.CHAR
+import com.squareup.kotlinpoet.CHAR_SEQUENCE
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.DOUBLE
+import com.squareup.kotlinpoet.FLOAT
+import com.squareup.kotlinpoet.INT
+import com.squareup.kotlinpoet.LONG
+import com.squareup.kotlinpoet.NUMBER
+import com.squareup.kotlinpoet.SHORT
+import com.squareup.kotlinpoet.STRING
+import com.squareup.kotlinpoet.TypeName
+import de.musichin.fireko.processor.Converter
 import de.musichin.fireko.processor.ValueType
+import de.musichin.fireko.processor.call
+import de.musichin.fireko.processor.invokeToType
+import de.musichin.fireko.processor.isOneOf
+import de.musichin.fireko.processor.isString
 
 internal abstract class NumberConverter : Converter() {
     override fun CodeBlock.Builder.convert(

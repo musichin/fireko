@@ -54,10 +54,10 @@ private fun putter(context: Context, param: TargetParameter): CodeBlock {
     }
 
     return CodeBlock.builder()
-            .beginControlFlow("if (%L != null)", param.name)
-            .add("put(%S, %L)\n", param.propertyName, serialize(context, param, false))
-            .endControlFlow()
-            .build()
+        .beginControlFlow("if (%L != null)", param.name)
+        .add("put(%S, %L)\n", param.propertyName, serialize(context, param, false))
+        .endControlFlow()
+        .build()
 }
 
 @KotlinPoetMetadataPreview
@@ -66,8 +66,8 @@ private fun serialize(
     param: TargetParameter,
     nullable: Boolean = param.type.isNullable
 ): CodeBlock {
-    val adapter = param.usingAdapter?.let { context.adapterElement(it) } ?:
-    context.getAnnotatedAdapter(param.type)
+    val adapter = param.usingAdapter?.let { context.adapterElement(it) }
+        ?: context.getAnnotatedAdapter(param.type)
     if (adapter != null) {
         return if (adapter.writeFunSpec != null) {
             val targetType = requireNotNull(adapter.writeFunSpec.returnType)

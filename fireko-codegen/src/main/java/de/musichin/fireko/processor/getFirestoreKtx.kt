@@ -26,7 +26,7 @@ internal fun getFirestoreExtensions(target: TargetClass): List<FunSpec> {
 
         genCollectionGet(target),
         genCollectionAdd(target),
-        //genCollectionSet(target),
+        // genCollectionSet(target),
         genCollectionAddListener(target),
         genCollectionAddListenerWithExecutor(target),
     )
@@ -68,11 +68,13 @@ private fun genDataAddListener(target: TargetClass) = FunSpec
     .builder("add${target.type.simpleName.capitalize(Locale.US)}Listener")
     .addParameter("listener", FIREBASE_EVENT_LISTENER.parameterizedBy(target.type))
     .receiver(FIREBASE_DOCUMENT_REFERENCE)
-    .addCode(CodeBlock.builder()
-        .beginControlFlow("return addSnapshotListener { value, error ->")
-        .add("listener.onEvent(value?.%L(), error)", toType(target.type))
-        .endControlFlow()
-        .build())
+    .addCode(
+        CodeBlock.builder()
+            .beginControlFlow("return addSnapshotListener { value, error ->")
+            .add("listener.onEvent(value?.%L(), error)", toType(target.type))
+            .endControlFlow()
+            .build()
+    )
     .build()
 
 @KotlinPoetMetadataPreview
@@ -81,11 +83,13 @@ private fun genDataAddListenerWithExecutor(target: TargetClass) = FunSpec
     .addParameter("executor", Executor::class.asClassName())
     .addParameter("listener", FIREBASE_EVENT_LISTENER.parameterizedBy(target.type))
     .receiver(FIREBASE_DOCUMENT_REFERENCE)
-    .addCode(CodeBlock.builder()
-        .beginControlFlow("return addSnapshotListener(executor) { value, error ->")
-        .add("listener.onEvent(value?.%L(), error)", toType(target.type))
-        .endControlFlow()
-        .build())
+    .addCode(
+        CodeBlock.builder()
+            .beginControlFlow("return addSnapshotListener(executor) { value, error ->")
+            .add("listener.onEvent(value?.%L(), error)", toType(target.type))
+            .endControlFlow()
+            .build()
+    )
     .build()
 
 @KotlinPoetMetadataPreview
@@ -94,11 +98,13 @@ private fun genDataAddListenerWithActivity(target: TargetClass) = FunSpec
     .addParameter("activity", ClassName("android.app", "Activity"))
     .addParameter("listener", FIREBASE_EVENT_LISTENER.parameterizedBy(target.type))
     .receiver(FIREBASE_DOCUMENT_REFERENCE)
-    .addCode(CodeBlock.builder()
-        .beginControlFlow("return addSnapshotListener(activity) { value, error ->")
-        .add("listener.onEvent(value?.%L(), error)", toType(target.type))
-        .endControlFlow()
-        .build())
+    .addCode(
+        CodeBlock.builder()
+            .beginControlFlow("return addSnapshotListener(activity) { value, error ->")
+            .add("listener.onEvent(value?.%L(), error)", toType(target.type))
+            .endControlFlow()
+            .build()
+    )
     .build()
 
 @KotlinPoetMetadataPreview
@@ -107,11 +113,13 @@ private fun genDataAddListenerWithMetadataChanges(target: TargetClass) = FunSpec
     .addParameter("metadataChanges", FIREBASE_METADATA_CHANGES)
     .addParameter("listener", FIREBASE_EVENT_LISTENER.parameterizedBy(target.type))
     .receiver(FIREBASE_DOCUMENT_REFERENCE)
-    .addCode(CodeBlock.builder()
-        .beginControlFlow("return addSnapshotListener(metadataChanges) { value, error ->")
-        .add("listener.onEvent(value?.%L(), error)", toType(target.type))
-        .endControlFlow()
-        .build())
+    .addCode(
+        CodeBlock.builder()
+            .beginControlFlow("return addSnapshotListener(metadataChanges) { value, error ->")
+            .add("listener.onEvent(value?.%L(), error)", toType(target.type))
+            .endControlFlow()
+            .build()
+    )
     .build()
 
 @KotlinPoetMetadataPreview
@@ -121,11 +129,13 @@ private fun genDataAddListenerWithExecutorAndMetadataChanges(target: TargetClass
     .addParameter("metadataChanges", FIREBASE_METADATA_CHANGES)
     .addParameter("listener", FIREBASE_EVENT_LISTENER.parameterizedBy(target.type))
     .receiver(FIREBASE_DOCUMENT_REFERENCE)
-    .addCode(CodeBlock.builder()
-        .beginControlFlow("return addSnapshotListener(executor, metadataChanges) { value, error ->")
-        .add("listener.onEvent(value?.%L(), error)", toType(target.type))
-        .endControlFlow()
-        .build())
+    .addCode(
+        CodeBlock.builder()
+            .beginControlFlow("return addSnapshotListener(executor, metadataChanges) { value, error ->")
+            .add("listener.onEvent(value?.%L(), error)", toType(target.type))
+            .endControlFlow()
+            .build()
+    )
     .build()
 
 @KotlinPoetMetadataPreview
@@ -135,11 +145,13 @@ private fun genDataAddListenerWithActivityAndMetadataChanges(target: TargetClass
     .addParameter("metadataChanges", FIREBASE_METADATA_CHANGES)
     .addParameter("listener", FIREBASE_EVENT_LISTENER.parameterizedBy(target.type))
     .receiver(FIREBASE_DOCUMENT_REFERENCE)
-    .addCode(CodeBlock.builder()
-        .beginControlFlow("return addSnapshotListener(activity, metadataChanges) { value, error ->")
-        .add("listener.onEvent(value?.%L(), error)", toType(target.type))
-        .endControlFlow()
-        .build())
+    .addCode(
+        CodeBlock.builder()
+            .beginControlFlow("return addSnapshotListener(activity, metadataChanges) { value, error ->")
+            .add("listener.onEvent(value?.%L(), error)", toType(target.type))
+            .endControlFlow()
+            .build()
+    )
     .build()
 
 @KotlinPoetMetadataPreview
@@ -167,8 +179,8 @@ private fun genCollectionAdd(target: TargetClass) = FunSpec
     .addCode(CodeBlock.of("return add(data.toMap())"))
     .build()
 
-//@KotlinPoetMetadataPreview
-//private fun genCollectionSet(target: TargetClass): FunSpec? {
+// @KotlinPoetMetadataPreview
+// private fun genCollectionSet(target: TargetClass): FunSpec? {
 //    if (!target.needsDocumentId) return null
 //
 //    return FunSpec
@@ -186,22 +198,24 @@ private fun genCollectionAdd(target: TargetClass) = FunSpec
 //            .add("return document().set(data)")
 //            .build())
 //        .build()
-//}
+// }
 
 @KotlinPoetMetadataPreview
 private fun genCollectionAddListener(target: TargetClass) = FunSpec
     .builder("add${target.type.simpleName.capitalize(Locale.US)}Listener")
     .addParameter("listener", FIREBASE_EVENT_LISTENER.parameterizedBy(LIST.parameterizedBy(target.type)))
     .receiver(FIREBASE_COLLECTION_REFERENCE)
-    .addCode(CodeBlock.builder()
-        .beginControlFlow("return addSnapshotListener { value, error ->")
-        .add("listener.onEvent(")
-        .beginControlFlow("value?.documents?.mapNotNull {")
-        .add("it?.%L()", toType(target.type))
-        .endControlFlow()
-        .add(", error)")
-        .endControlFlow()
-        .build())
+    .addCode(
+        CodeBlock.builder()
+            .beginControlFlow("return addSnapshotListener { value, error ->")
+            .add("listener.onEvent(")
+            .beginControlFlow("value?.documents?.mapNotNull {")
+            .add("it?.%L()", toType(target.type))
+            .endControlFlow()
+            .add(", error)")
+            .endControlFlow()
+            .build()
+    )
     .build()
 
 @KotlinPoetMetadataPreview
@@ -210,13 +224,15 @@ private fun genCollectionAddListenerWithExecutor(target: TargetClass) = FunSpec
     .addParameter("executor", Executor::class.asClassName())
     .addParameter("listener", FIREBASE_EVENT_LISTENER.parameterizedBy(LIST.parameterizedBy(target.type)))
     .receiver(FIREBASE_COLLECTION_REFERENCE)
-    .addCode(CodeBlock.builder()
-        .beginControlFlow("return addSnapshotListener(executor) { value, error ->")
-        .add("listener.onEvent(")
-        .beginControlFlow("value?.documents?.mapNotNull {")
-        .add("it?.%L()", toType(target.type))
-        .endControlFlow()
-        .add(", error)")
-        .endControlFlow()
-        .build())
+    .addCode(
+        CodeBlock.builder()
+            .beginControlFlow("return addSnapshotListener(executor) { value, error ->")
+            .add("listener.onEvent(")
+            .beginControlFlow("value?.documents?.mapNotNull {")
+            .add("it?.%L()", toType(target.type))
+            .endControlFlow()
+            .add(", error)")
+            .endControlFlow()
+            .build()
+    )
     .build()

@@ -1,6 +1,11 @@
 package de.musichin.fireko.processor
 
-import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.STRING
+import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.metadata.KotlinPoetMetadataPreview
 
 @KotlinPoetMetadataPreview
@@ -61,8 +66,8 @@ private fun generateInitializer(context: Context, param: TargetParameter): CodeB
             .build()
     }
 
-    val adapter = param.usingAdapter?.let { context.adapterElement(it) } ?:
-        context.getAnnotatedAdapter(type)
+    val adapter = param.usingAdapter?.let { context.adapterElement(it) }
+        ?: context.getAnnotatedAdapter(type)
     if (adapter != null) {
         return if (adapter.readFunSpec != null) {
             val sourceType = adapter.readFunSpec.parameters.first().type
@@ -87,7 +92,10 @@ private fun generateInitializer(context: Context, param: TargetParameter): CodeB
 @KotlinPoetMetadataPreview
 private fun CodeBlock.Builder.assertNotNull(param: TargetParameter) = apply {
     if (!param.type.isNullable && !param.hasDefaultValue) {
-        add("?: throw NullPointerException(%S)", "Property ${param.propertyName} is absent or null.")
+        add(
+            "?: throw NullPointerException(%S)",
+            "Property ${param.propertyName} is absent or null."
+        )
     }
 }
 

@@ -52,10 +52,10 @@ internal class TargetParameter(
     }
 
     val omitNullValue = type.isNullable &&
-            (propertyNullValues ?: targetNullValues)?.omit == true
+        (propertyNullValues ?: targetNullValues)?.omit == true
 
     val presetNullValue = hasDefaultValue &&
-            (propertyNullValues ?: targetNullValues)?.preset == true
+        (propertyNullValues ?: targetNullValues)?.preset == true
 
     val embedded: Boolean = hasAnnotation(Embedded::class.asClassName())
 
