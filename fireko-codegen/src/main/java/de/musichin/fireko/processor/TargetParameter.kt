@@ -11,7 +11,6 @@ import de.musichin.fireko.annotations.FirekoAdapter
 import de.musichin.fireko.annotations.NullValues
 import javax.lang.model.type.DeclaredType
 
-@KotlinPoetMetadataPreview
 internal class TargetParameter(
     classElement: ClassElement,
     parameterSpec: ParameterSpec,
