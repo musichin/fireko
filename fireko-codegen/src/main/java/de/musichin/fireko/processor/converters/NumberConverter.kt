@@ -51,6 +51,16 @@ internal abstract class NumberConverter : Converter() {
             return this
         }
 
+        if (source.isNumber() && target.isOneOf(CHAR)) {
+            return invokeToType(source.isNullable, INT.simpleName)
+                .invokeToType(source.isNullable, CHAR.simpleName)
+        }
+
+        if (source.isOneOf(CHAR) && target.isNumber()) {
+            return call().add("code")
+                .invokeToType(source.isNullable, (target as ClassName).simpleName)
+        }
+
         if (source.isNumber()) {
             return invokeToType(source.isNullable, (target as ClassName).simpleName)
         }
