@@ -36,5 +36,5 @@ dependencies {
     implementation project(':fireko')
     kapt project(':fireko-codegen')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'com.google.firebase:firebase-firestore:23.0.3'
+    implementation 'com.google.firebase:firebase-firestore:24.4.0'
 }
